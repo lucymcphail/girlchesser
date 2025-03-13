@@ -129,7 +129,7 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
 
   // CASTLING RIGHTS -----------------------------------------------------------
 
-  let white_castle_rights = case side_to_move {
+  let white_castle_rights = case board.side_to_move {
     // White to move; white castle rights --------------------------------------
     White ->
       case piece_at(board, move.from) {
@@ -166,7 +166,7 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
       }
   }
 
-  let black_castle_rights = case side_to_move {
+  let black_castle_rights = case board.side_to_move {
     // Black to move; black castle rights --------------------------------------
     Black ->
       case piece_at(board, move.from) {
@@ -211,7 +211,7 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
     && int.absolute_value(rank(move.to) - rank(move.from)) == 2
   {
     True ->
-      option.Some(square(file(move.to), { rank(move.to) + rank(move.to) } / 2))
+      option.Some(square(file(move.to), { rank(move.from) + rank(move.to) } / 2))
     False -> option.None
   }
 
@@ -254,19 +254,19 @@ fn remove_castle_rights(
   }
 }
 
-fn square(file: Int, rank: Int) {
+pub fn square(file: Int, rank: Int) {
   { { 8 - rank } * 8 } + { file - 1 }
 }
 
-fn file(square: Int) -> Int {
+pub fn file(square: Int) -> Int {
   { square % 8 } + 1
 }
 
-fn rank(square: Int) -> Int {
+pub fn rank(square: Int) -> Int {
   8 - { square / 8 }
 }
 
-fn piece_at(board: Board, square: Int) -> option.Option(Piece) {
+pub fn piece_at(board: Board, square: Int) -> option.Option(Piece) {
   case iv.get(board.pieces, square) {
     Ok(target) ->
       case target {
@@ -277,7 +277,7 @@ fn piece_at(board: Board, square: Int) -> option.Option(Piece) {
   }
 }
 
-fn other_color(color: Color) -> Color {
+pub fn other_color(color: Color) -> Color {
   case color {
     Black -> White
     White -> Black
