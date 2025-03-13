@@ -123,6 +123,9 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
     |> iv.try_set(at: move.to, to: from_square)
     |> iv.try_set(at: move.from, to: Empty)
 
+  // TODO add castling
+  // TODO add en passant
+
   // TURN SWAPPING -------------------------------------------------------------
 
   let side_to_move = other_color(board.side_to_move)

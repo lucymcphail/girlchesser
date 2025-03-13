@@ -1,7 +1,28 @@
+import birdie
 import girlchesser/board/board.{Move, square}
 import girlchesser/fen
 import gleam/option
 import gleeunit/should
+
+pub fn make_move_1_test() {
+  fen.startpos
+  |> fen.parse
+  |> should.be_ok
+  |> board.make_move(Move(square(5, 2), square(5, 4)))
+  |> should.be_ok
+  |> board.make_move(Move(square(4, 7), square(4, 5)))
+  |> should.be_ok
+  |> board.make_move(Move(square(5, 4), square(4, 5)))
+  |> should.be_ok
+  |> board.make_move(Move(square(4, 8), square(4, 5)))
+  |> should.be_ok
+  |> board.make_move(Move(square(2, 1), square(3, 3)))
+  |> should.be_ok
+  |> board.make_move(Move(square(4, 5), square(1, 5)))
+  |> should.be_ok
+  |> board.to_string
+  |> birdie.snap("[board] Scandinavian defence")
+}
 
 pub fn en_passant_test() {
   let pos =
@@ -24,7 +45,7 @@ pub fn en_passant_test() {
 
   let pos =
     pos
-    |> board.make_move(Move(square(6, 1), square(5, 3)))
+    |> board.make_move(Move(square(7, 1), square(6, 3)))
     |> should.be_ok
 
   pos.en_passant
