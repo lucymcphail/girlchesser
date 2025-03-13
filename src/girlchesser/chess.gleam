@@ -1,3 +1,4 @@
+import girlchesser/fen
 import gleam/dynamic/decode
 
 pub type Player {
@@ -14,10 +15,7 @@ pub fn player_decoder() {
   }
 }
 
-pub fn move(
-  fen: String,
-  turn: Player,
-  failed_moves: List(String),
-) -> Result(String, String) {
-  todo
+pub fn move(fen: String, _, _) -> Result(String, String) {
+  let _board = fen.parse(fen)
+  Ok("e2e4")
 }

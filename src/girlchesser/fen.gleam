@@ -1,8 +1,10 @@
 // IMPORTS ---------------------------------------------------------------------
 
-import girlchesser/board/board.{type Board, Board, PieceBitboards}
+import girlchesser/board/board.{type Board, Board}
 import gleam/int
+import gleam/list
 import gleam/option
+import iv
 
 //
 
@@ -16,23 +18,10 @@ import gleam/option
 pub fn parse(input: String) -> Result(_, String) {
   let init =
     Board(
-      pieces: PieceBitboards(
-        kings: <<>>,
-        queens: <<>>,
-        rooks: <<>>,
-        bishops: <<>>,
-        knights: <<>>,
-        pawns: <<>>,
-      ),
-      white_combined: <<>>,
-      black_combined: <<>>,
-      all_combined: <<>>,
+      pieces: iv.initialise(0, fn(_) { board.Empty }),
       side_to_move: board.White,
       white_castle_rights: board.NoRights,
       black_castle_rights: board.NoRights,
-      pinned: <<>>,
-      checkers: <<>>,
-      hash: <<0>>,
       en_passant: option.None,
     )
   parse_piece_placement(input, init)
@@ -64,249 +53,107 @@ fn parse_rank(input: String, rank: Int, acc: Board) -> Result(Board, String) {
     | "1" as size <> rest -> {
       let assert Ok(size) = int.parse(size)
 
-      let kings = <<acc.pieces.kings:bits, 0:size(size)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(size)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(size)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(size)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(size)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(size)>>
-      let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(size)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(size)>>
-      let all_combined = <<acc.all_combined:bits, 0:size(size)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+      let blanks = list.repeat(board.Empty, times: size)
+      let pieces = iv.append_list(acc.pieces, blanks)
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     // White pieces ------------------------------------------------------------
     "P" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 1:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.Pawn))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "N" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 1:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.Knight))
+      let board = Board(..acc, pieces:)
 
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
       parse_rank(rest, rank, board)
     }
 
     "B" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 1:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.Bishop))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "R" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 1:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.Rook))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "Q" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 1:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.Queen))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "K" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 1:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 1:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 0:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.White, board.King))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     // Black pieces ------------------------------------------------------------
     "p" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 1:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.Pawn))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "n" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 1:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.Knight))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "b" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 1:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.Bishop))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "r" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 1:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.Rook))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "q" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 0:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 1:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.Queen))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
 
     "k" <> rest -> {
-      let kings = <<acc.pieces.kings:bits, 1:size(1)>>
-      let queens = <<acc.pieces.queens:bits, 0:size(1)>>
-      let rooks = <<acc.pieces.rooks:bits, 0:size(1)>>
-      let bishops = <<acc.pieces.bishops:bits, 0:size(1)>>
-      let knights = <<acc.pieces.knights:bits, 0:size(1)>>
-      let pawns = <<acc.pieces.pawns:bits, 0:size(1)>>
       let pieces =
-        PieceBitboards(kings:, queens:, rooks:, bishops:, knights:, pawns:)
-
-      let white_combined = <<acc.white_combined:bits, 0:size(1)>>
-      let black_combined = <<acc.black_combined:bits, 1:size(1)>>
-      let all_combined = <<acc.all_combined:bits, 1:size(1)>>
-      let board =
-        Board(..acc, pieces:, white_combined:, black_combined:, all_combined:)
+        iv.append(acc.pieces, board.Occupied(board.Black, board.King))
+      let board = Board(..acc, pieces:)
 
       parse_rank(rest, rank, board)
     }
@@ -421,15 +268,15 @@ fn parse_en_passant_file(
   acc: Board,
 ) -> Result(Board, String) {
   case input {
-    "3 " ->
+    "3 " <> rest ->
       parse_halfmove_clock(
-        input,
+        rest,
         Board(..acc, en_passant: option.Some(rank + 8 * 2)),
       )
 
-    "6 " ->
+    "6 " <> rest ->
       parse_halfmove_clock(
-        input,
+        rest,
         Board(..acc, en_passant: option.Some(rank + 8 * 5)),
       )
 
