@@ -1,0 +1,14 @@
+---
+version: 1.2.6
+title: [fen] checkmate in 6
+file: ./test/snapshots/fen_test.gleam
+test_name: checkmate_in_6_test
+---
+        
+        
+        
+        
+        
+    ♔   
+     ♕  
+       ♚
