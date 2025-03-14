@@ -34,6 +34,26 @@ pub fn en_passant_test() {
   |> birdie.snap("[board] Capturing en passant")
 }
 
+pub fn castling_kingside_test() {
+  "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4"
+  |> fen.parse
+  |> should.be_ok
+  |> board.make_move(Move(square(5, 1), square(7, 1)))
+  |> should.be_ok
+  |> board.to_string
+  |> birdie.snap("[board] Castling kingside")
+}
+
+pub fn castling_queenside_test() {
+  "r3k1nr/pppq1ppp/2npb3/2b1p3/2B1P3/2NP1N2/PPPB1PPP/R2Q1RK1 b kq - 4 7"
+  |> fen.parse
+  |> should.be_ok
+  |> board.make_move(Move(square(5, 8), square(3, 8)))
+  |> should.be_ok
+  |> board.to_string
+  |> birdie.snap("[board] Castling queenside")
+}
+
 pub fn en_passant_target_test() {
   let pos =
     fen.startpos

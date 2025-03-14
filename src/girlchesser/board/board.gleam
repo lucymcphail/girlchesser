@@ -110,6 +110,9 @@ fn do_to_string(pieces: iv.Array(Square), index: Int, acc: String) -> String {
   }
 }
 
+/// Apply a move to a board position. Note that this function does not
+/// check a move for legality, so illegal moves or positions are
+/// considered undefined behaviour.
 pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
   use from_square <- result.try(result.replace_error(
     iv.get(board.pieces, move.from),
@@ -123,8 +126,39 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
     |> iv.try_set(at: move.to, to: from_square)
     |> iv.try_set(at: move.from, to: Empty)
 
-  // TODO add castling
+  // Castling ------------------------------------------------------------------
+  let pieces = case
+    // if we move a king...
+    piece_at(board, move.from) == option.Some(King)
+    // ...by two squares horizontally:
+    && int.absolute_value(file(move.to) - file(move.from)) == 2
+  {
+    // then castle it
+    True ->
+      case file(move.to) {
+        // queenside
+        3 ->
+          pieces
+          |> iv.try_set(at: square(1, rank(move.to)), to: Empty)
+          |> iv.try_set(
+            at: square(4, rank(move.to)),
+            to: Occupied(board.side_to_move, Rook),
+          )
+        // kingside
+        7 ->
+          pieces
+          |> iv.try_set(at: square(8, rank(move.to)), to: Empty)
+          |> iv.try_set(
+            at: square(6, rank(move.to)),
+            to: Occupied(board.side_to_move, Rook),
+          )
+        // should be unreachable, do nothing
+        _ -> pieces
+      }
+    False -> pieces
+  }
 
+  // En passant ----------------------------------------------------------------
   let pieces = case
     // if we move a pawn...
     piece_at(board, move.from) == option.Some(Pawn)
