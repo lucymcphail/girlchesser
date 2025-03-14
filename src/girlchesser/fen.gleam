@@ -252,34 +252,34 @@ fn parse_en_passant_target_square(
 ) -> Result(Board, String) {
   case input {
     "- " <> rest -> parse_halfmove_clock(rest, acc)
-    "a" <> rest -> parse_en_passant_file(rest, 1, acc)
-    "b" <> rest -> parse_en_passant_file(rest, 2, acc)
-    "c" <> rest -> parse_en_passant_file(rest, 3, acc)
-    "d" <> rest -> parse_en_passant_file(rest, 4, acc)
-    "e" <> rest -> parse_en_passant_file(rest, 5, acc)
-    "f" <> rest -> parse_en_passant_file(rest, 6, acc)
-    "g" <> rest -> parse_en_passant_file(rest, 7, acc)
-    "h" <> rest -> parse_en_passant_file(rest, 8, acc)
+    "a" <> rest -> parse_en_passant_rank(rest, 1, acc)
+    "b" <> rest -> parse_en_passant_rank(rest, 2, acc)
+    "c" <> rest -> parse_en_passant_rank(rest, 3, acc)
+    "d" <> rest -> parse_en_passant_rank(rest, 4, acc)
+    "e" <> rest -> parse_en_passant_rank(rest, 5, acc)
+    "f" <> rest -> parse_en_passant_rank(rest, 6, acc)
+    "g" <> rest -> parse_en_passant_rank(rest, 7, acc)
+    "h" <> rest -> parse_en_passant_rank(rest, 8, acc)
     _ -> Error(input)
   }
 }
 
-fn parse_en_passant_file(
+fn parse_en_passant_rank(
   input: String,
-  rank: Int,
+  file: Int,
   acc: Board,
 ) -> Result(Board, String) {
   case input {
     "3 " <> rest ->
       parse_halfmove_clock(
         rest,
-        Board(..acc, en_passant: option.Some(rank + 8 * 2)),
+        Board(..acc, en_passant: option.Some(board.square(file, 3))),
       )
 
     "6 " <> rest ->
       parse_halfmove_clock(
         rest,
-        Board(..acc, en_passant: option.Some(rank + 8 * 5)),
+        Board(..acc, en_passant: option.Some(board.square(file, 6))),
       )
 
     _ -> Error(input)
