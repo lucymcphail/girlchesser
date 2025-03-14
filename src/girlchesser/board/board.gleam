@@ -124,7 +124,25 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
     |> iv.try_set(at: move.from, to: Empty)
 
   // TODO add castling
-  // TODO add en passant
+
+  let pieces = case
+    // if we move a pawn...
+    piece_at(board, move.from) == option.Some(Pawn)
+    // ...onto the en passant target square:
+    && board.en_passant == option.Some(move.to)
+  {
+    // then capture en passant
+    True ->
+      case rank(move.to) {
+        // white pawn
+        3 -> pieces |> iv.try_set(at: square(file(move.to), 4), to: Empty)
+        // black pawn
+        6 -> pieces |> iv.try_set(at: square(file(move.to), 5), to: Empty)
+        // should be unreachable, do nothing
+        _ -> pieces
+      }
+    False -> pieces
+  }
 
   // TURN SWAPPING -------------------------------------------------------------
 
@@ -209,11 +227,15 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
   // EN PASSANT ----------------------------------------------------------------
 
   let en_passant = case
+    // if we move a pawn...
     piece_at(board, move.from) == option.Some(Pawn)
+    // ...along the same file...
     && file(move.from) == file(move.to)
+    // ...by two squares:
     && int.absolute_value(rank(move.to) - rank(move.from)) == 2
   {
     True ->
+      // then mark the square it moved through as the en passant target
       option.Some(square(file(move.to), { rank(move.from) + rank(move.to) } / 2))
     False -> option.None
   }
