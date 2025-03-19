@@ -15,6 +15,7 @@ pub type Board {
 
 pub type Square {
   Empty
+  OutsideBoard
   Occupied(color: Color, piece: Piece)
 }
 
@@ -93,6 +94,7 @@ fn do_to_string(pieces: iv.Array(Square), index: Int, acc: String) -> String {
                 Black -> acc <> "♟"
               }
           }
+        OutsideBoard -> acc
         Empty -> acc <> " "
       }
     }
@@ -102,12 +104,12 @@ fn do_to_string(pieces: iv.Array(Square), index: Int, acc: String) -> String {
   }
 
   // if we're at the last square of a file, add a newline
-  let with_newlines = case index % 8 == 7 && index < 62 {
+  let with_newlines = case index % 16 == 15 && index > 32 && index < 159 {
     True -> result <> "\n"
     False -> result
   }
 
-  case index < 64 {
+  case index < 192 {
     True -> do_to_string(pieces, index + 1, with_newlines)
     False -> with_newlines
   }
@@ -301,15 +303,15 @@ fn remove_castle_rights(
 }
 
 pub fn square(file: Int, rank: Int) {
-  { { 8 - rank } * 8 } + { file - 1 }
+  { 16 * { 8 - rank } } + { file - 1 } + 36
 }
 
 pub fn file(square: Int) -> Int {
-  { square % 8 } + 1
+  { { square - 36 } % 8 } + 1
 }
 
 pub fn rank(square: Int) -> Int {
-  8 - { square / 8 }
+  8 - { { square - 36 } / 16 }
 }
 
 pub fn piece_at(board: Board, square: Int) -> option.Option(Piece) {
@@ -317,7 +319,7 @@ pub fn piece_at(board: Board, square: Int) -> option.Option(Piece) {
     Ok(target) ->
       case target {
         Occupied(_, square) -> option.Some(square)
-        Empty -> option.None
+        _ -> option.None
       }
     _ -> option.None
   }

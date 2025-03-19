@@ -20,7 +20,7 @@ pub const startpos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 pub fn parse(input: String) -> Result(_, String) {
   let init =
     Board(
-      pieces: iv.initialise(0, fn(_) { board.Empty }),
+      pieces: iv.initialise(36, fn(_) { board.OutsideBoard }),
       side_to_move: board.White,
       white_castle_rights: board.NoRights,
       black_castle_rights: board.NoRights,
@@ -161,7 +161,13 @@ fn parse_rank(input: String, rank: Int, acc: Board) -> Result(Board, String) {
     }
 
     // Advancement ------------------------------------------------------------
-    "/" <> rest if rank > 1 -> parse_rank(rest, rank - 1, acc)
+    "/" <> rest if rank > 1 -> {
+      let guards = list.repeat(board.OutsideBoard, 8)
+      let pieces = iv.append_list(acc.pieces, guards)
+      let acc = Board(..acc, pieces:)
+
+      parse_rank(rest, rank - 1, acc)
+    }
 
     " " <> rest if rank == 1 -> parse_side_to_move(rest, acc)
 
@@ -174,6 +180,10 @@ fn parse_rank(input: String, rank: Int, acc: Board) -> Result(Board, String) {
 /// <Side to move> ::= {'w' | 'b'}
 ///
 fn parse_side_to_move(input: String, acc: Board) -> Result(Board, String) {
+  let guards = list.repeat(board.OutsideBoard, 36)
+  let pieces = iv.append_list(acc.pieces, guards)
+  let acc = Board(..acc, pieces:)
+  
   case input {
     "w " <> rest ->
       parse_castling_ability(rest, Board(..acc, side_to_move: board.White))
