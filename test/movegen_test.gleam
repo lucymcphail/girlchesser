@@ -1,4 +1,4 @@
-import girlchesser/board/board
+import girlchesser/board/board.{square}
 import girlchesser/board/movegen
 import girlchesser/fen
 import gleam/dict
@@ -23,23 +23,55 @@ pub fn test_generate_pawn_moves_1_test() {
   movegen.generate_pawn_moves(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(board.square(1, 2), board.square(1, 3)),
-      board.NormalMove(board.square(1, 2), board.square(1, 4)),
-      board.NormalMove(board.square(2, 2), board.square(2, 3)),
-      board.NormalMove(board.square(2, 2), board.square(2, 4)),
-      board.NormalMove(board.square(3, 2), board.square(3, 3)),
-      board.NormalMove(board.square(3, 2), board.square(3, 4)),
-      board.NormalMove(board.square(4, 2), board.square(4, 3)),
-      board.NormalMove(board.square(4, 2), board.square(4, 4)),
-      board.NormalMove(board.square(5, 2), board.square(5, 3)),
-      board.NormalMove(board.square(5, 2), board.square(5, 4)),
-      board.NormalMove(board.square(6, 2), board.square(6, 3)),
-      board.NormalMove(board.square(6, 2), board.square(6, 4)),
-      board.NormalMove(board.square(7, 2), board.square(7, 3)),
-      board.NormalMove(board.square(7, 2), board.square(7, 4)),
-      board.NormalMove(board.square(8, 2), board.square(8, 3)),
-      board.NormalMove(board.square(8, 2), board.square(8, 4)),
+      board.NormalMove(square(1, 2), square(1, 3)),
+      board.NormalMove(square(1, 2), square(1, 4)),
+      board.NormalMove(square(2, 2), square(2, 3)),
+      board.NormalMove(square(2, 2), square(2, 4)),
+      board.NormalMove(square(3, 2), square(3, 3)),
+      board.NormalMove(square(3, 2), square(3, 4)),
+      board.NormalMove(square(4, 2), square(4, 3)),
+      board.NormalMove(square(4, 2), square(4, 4)),
+      board.NormalMove(square(5, 2), square(5, 3)),
+      board.NormalMove(square(5, 2), square(5, 4)),
+      board.NormalMove(square(6, 2), square(6, 3)),
+      board.NormalMove(square(6, 2), square(6, 4)),
+      board.NormalMove(square(7, 2), square(7, 3)),
+      board.NormalMove(square(7, 2), square(7, 4)),
+      board.NormalMove(square(8, 2), square(8, 3)),
+      board.NormalMove(square(8, 2), square(8, 4)),
     ]),
   )
   |> should.be_true
+}
+
+pub fn generate_en_passant_test() {
+  let pos =
+    "7k/8/8/3pP3/8/8/8/7K w - d6 0 1"
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_pawn_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.NormalMove(square(5, 5), square(5, 6)),
+      board.EnPassantMove(square(5, 5), square(4, 6)),
+    ]),
+  )
+}
+
+pub fn generate_promotion_test() {
+  let pos =
+    "7k/3P4/8/8/8/8/8/7K w - - 0 1"
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_pawn_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.PromotionMove(square(4, 7), square(4, 8), board.Knight),
+      board.PromotionMove(square(4, 7), square(4, 8), board.Bishop),
+      board.PromotionMove(square(4, 7), square(4, 8), board.Rook),
+      board.PromotionMove(square(4, 7), square(4, 8), board.Queen),
+    ]),
+  )
 }
