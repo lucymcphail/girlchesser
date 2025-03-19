@@ -46,7 +46,10 @@ pub type BoardStatus {
 }
 
 pub type Move {
-  Move(from: Int, to: Int)
+  NormalMove(from: Int, to: Int)
+  CastlingMove(from: Int, to: Int)
+  EnPassantMove(from: Int, to: Int)
+  PromotionMove(from: Int, to: Int, promote_to: Piece)
 }
 
 pub fn to_string(board: Board) -> String {
@@ -126,15 +129,9 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
     |> iv.try_set(at: move.to, to: from_square)
     |> iv.try_set(at: move.from, to: Empty)
 
-  // Castling ------------------------------------------------------------------
-  let pieces = case
-    // if we move a king...
-    piece_at(board, move.from) == option.Some(King)
-    // ...by two squares horizontally:
-    && int.absolute_value(file(move.to) - file(move.from)) == 2
-  {
-    // then castle it
-    True ->
+  let pieces = case move {
+    // Castling ------------------------------------------------------------------
+    CastlingMove(_, _) ->
       case file(move.to) {
         // queenside
         3 ->
@@ -155,18 +152,8 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
         // should be unreachable, do nothing
         _ -> pieces
       }
-    False -> pieces
-  }
-
-  // En passant ----------------------------------------------------------------
-  let pieces = case
-    // if we move a pawn...
-    piece_at(board, move.from) == option.Some(Pawn)
-    // ...onto the en passant target square:
-    && board.en_passant == option.Some(move.to)
-  {
-    // then capture en passant
-    True ->
+    // En passant ----------------------------------------------------------------
+    EnPassantMove(_, _) ->
       case rank(move.to) {
         // white pawn
         3 -> pieces |> iv.try_set(at: square(file(move.to), 4), to: Empty)
@@ -175,7 +162,7 @@ pub fn make_move(board: Board, move: Move) -> Result(Board, String) {
         // should be unreachable, do nothing
         _ -> pieces
       }
-    False -> pieces
+    _ -> pieces
   }
 
   // TURN SWAPPING -------------------------------------------------------------
