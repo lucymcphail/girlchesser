@@ -75,3 +75,34 @@ pub fn generate_promotion_test() {
     ]),
   )
 }
+
+pub fn generate_king_moves_test() {
+  let pos =
+    "8/8/1r6/k7/8/8/6K1/8 b - - 0 1"
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_king_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.NormalMove(square(1, 5), square(1, 6)),
+      board.NormalMove(square(1, 5), square(2, 5)),
+      board.NormalMove(square(1, 5), square(2, 4)),
+      board.NormalMove(square(1, 5), square(1, 4)),
+    ]),
+  )
+}
+
+pub fn generate_castle_test() {
+  let pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w K - 0 1"
+  |> fen.parse
+  |> should.be_ok
+
+  movegen.generate_king_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.NormalMove(square(5, 1), square(6, 1)),
+      board.CastlingMove(square(5, 1), square(7, 1)),
+    ])
+  )
+}
