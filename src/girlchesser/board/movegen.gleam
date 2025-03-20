@@ -1,4 +1,5 @@
 import girlchesser/board/board.{type Board}
+import gleam/list
 import gleam/option
 import iv
 
@@ -26,21 +27,21 @@ pub fn can_move_to(board: Board, square: Int) -> Bool {
   }
 }
 
-pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
-  let pawn_direction = case board.side_to_move {
+pub fn generate_pawn_moves(pos: Board) -> iv.Array(board.Move) {
+  let pawn_direction = case pos.side_to_move {
     board.Black -> 16
     board.White -> -16
   }
 
-  let starting_rank = case board.side_to_move {
+  let starting_rank = case pos.side_to_move {
     board.Black -> 7
     board.White -> 2
   }
 
-  my_pieces(board, board.Pawn)
+  my_pieces(pos, board.Pawn)
   |> iv.flat_map(fn(square) {
     // One space moves ---------------------------------------------------------
-    let moves = case board.pieces |> iv.get(square + pawn_direction) {
+    let moves = case pos.pieces |> iv.get(square + pawn_direction) {
       Ok(board.Empty) ->
         iv.from_list([board.NormalMove(square, square + pawn_direction)])
       _ -> iv.from_list([])
@@ -49,8 +50,8 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
     // Two space moves ---------------------------------------------------------
     let moves = case
       board.rank(square) == starting_rank
-      && board.pieces |> iv.get(square + pawn_direction) == Ok(board.Empty)
-      && board.pieces |> iv.get(square + pawn_direction * 2) == Ok(board.Empty)
+      && pos.pieces |> iv.get(square + pawn_direction) == Ok(board.Empty)
+      && pos.pieces |> iv.get(square + pawn_direction * 2) == Ok(board.Empty)
     {
       True ->
         moves
@@ -60,9 +61,9 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
 
     // Captures ----------------------------------------------------------------
     // left
-    let moves = case board.pieces |> iv.get(square + pawn_direction - 1) {
+    let moves = case pos.pieces |> iv.get(square + pawn_direction - 1) {
       Ok(board.Occupied(color, _)) ->
-        case color != board.side_to_move {
+        case color != pos.side_to_move {
           True ->
             moves
             |> iv.append(board.NormalMove(square, square + pawn_direction - 1))
@@ -71,9 +72,9 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
       _ -> moves
     }
     // right
-    let moves = case board.pieces |> iv.get(square + pawn_direction + 1) {
+    let moves = case pos.pieces |> iv.get(square + pawn_direction + 1) {
       Ok(board.Occupied(color, _)) ->
-        case color != board.side_to_move {
+        case color != pos.side_to_move {
           True ->
             moves
             |> iv.append(board.NormalMove(square, square + pawn_direction + 1))
@@ -85,7 +86,7 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
     // En passant --------------------------------------------------------------
     // left
     let moves = case
-      board.en_passant == option.Some(square + pawn_direction - 1)
+      pos.en_passant == option.Some(square + pawn_direction - 1)
     {
       True ->
         moves
@@ -94,7 +95,7 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
     }
     // right
     let moves = case
-      board.en_passant == option.Some(square + pawn_direction + 1)
+      pos.en_passant == option.Some(square + pawn_direction + 1)
     {
       True ->
         moves
@@ -104,7 +105,10 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
 
     // Promotion ---------------------------------------------------------------
     let to_rank = board.rank(square + pawn_direction)
-    let moves = case to_rank == 1 || to_rank == 8 {
+    let moves = case
+      { to_rank == 1 || to_rank == 8 }
+      && iv.get(pos.pieces, square + pawn_direction) == Ok(board.Empty)
+    {
       True ->
         moves
         |> iv.append_list([
@@ -118,6 +122,64 @@ pub fn generate_pawn_moves(board: Board) -> iv.Array(board.Move) {
 
     moves
   })
+}
+
+pub type CastlingDirection {
+  KingSide
+  QueenSide
+}
+
+pub fn can_castle(
+  pos: Board,
+  color: board.Color,
+  direction: CastlingDirection,
+) -> Bool {
+  let source_square = case color {
+    board.Black -> board.square(5, 8)
+    board.White -> board.square(5, 1)
+  }
+
+  let castling_squares = case color {
+    board.Black ->
+      case direction {
+        KingSide -> [board.square(6, 8), board.square(7, 8)]
+        QueenSide -> [
+          board.square(2, 8),
+          board.square(3, 8),
+          board.square(4, 8),
+        ]
+      }
+    board.White ->
+      case direction {
+        KingSide -> [board.square(6, 1), board.square(7, 1)]
+        QueenSide -> [
+          board.square(2, 1),
+          board.square(3, 1),
+          board.square(4, 1),
+        ]
+      }
+  }
+
+  case
+    castling_squares
+    |> list.all(fn(square) {
+      case pos.pieces |> iv.get(square) {
+        Ok(piece) -> piece == board.Empty
+        Error(_) -> False
+      }
+    })
+  {
+    False -> False
+    True ->
+      castling_squares
+      |> list.all(fn(square) {
+        let pieces =
+          pos.pieces
+          |> iv.try_set(source_square, board.Empty)
+          |> iv.try_set(square, board.Occupied(pos.side_to_move, board.King))
+        !is_in_check(board.Board(..pos, pieces:), pos.side_to_move)
+      })
+  }
 }
 
 pub fn generate_king_moves(pos: Board) -> iv.Array(board.Move) {
@@ -134,35 +196,82 @@ pub fn generate_king_moves(pos: Board) -> iv.Array(board.Move) {
       })
 
     // Castling ----------------------------------------------------------------
-    // TODO: disallow castling through pieces or through check
     let moves = case pos.side_to_move {
       board.Black ->
         case pos.black_castle_rights {
           board.Both ->
-            moves
-            |> iv.append_list([
-              board.CastlingMove(square, square + 2),
-              board.CastlingMove(square, square - 2),
-            ])
+            case
+              can_castle(pos, board.Black, KingSide)
+              && can_castle(pos, board.Black, QueenSide)
+            {
+              True ->
+                moves
+                |> iv.append_list([
+                  board.CastlingMove(square, square + 2),
+                  board.CastlingMove(square, square - 2),
+                ])
+              False ->
+                case can_castle(pos, board.Black, KingSide) {
+                  True ->
+                    moves |> iv.append(board.CastlingMove(square, square + 2))
+                  False ->
+                    case can_castle(pos, board.Black, QueenSide) {
+                      True ->
+                        moves
+                        |> iv.append(board.CastlingMove(square, square - 2))
+                      False -> moves
+                    }
+                }
+            }
           board.KingSide ->
-            moves |> iv.append(board.CastlingMove(square, square + 2))
+            case can_castle(pos, board.Black, KingSide) {
+              True -> moves |> iv.append(board.CastlingMove(square, square + 2))
+              False -> moves
+            }
           board.QueenSide ->
-            moves |> iv.append(board.CastlingMove(square, square - 2))
+            case can_castle(pos, board.Black, QueenSide) {
+              True -> moves |> iv.append(board.CastlingMove(square, square - 2))
+              False -> moves
+            }
           board.NoRights -> moves
         }
 
       board.White ->
-        case pos.white_castle_rights {
+        case pos.black_castle_rights {
           board.Both ->
-            moves
-            |> iv.append_list([
-              board.CastlingMove(square, square + 2),
-              board.CastlingMove(square, square - 2),
-            ])
+            case
+              can_castle(pos, board.White, KingSide)
+              && can_castle(pos, board.White, QueenSide)
+            {
+              True ->
+                moves
+                |> iv.append_list([
+                  board.CastlingMove(square, square + 2),
+                  board.CastlingMove(square, square - 2),
+                ])
+              False ->
+                case can_castle(pos, board.White, KingSide) {
+                  True ->
+                    moves |> iv.append(board.CastlingMove(square, square + 2))
+                  False ->
+                    case can_castle(pos, board.White, QueenSide) {
+                      True ->
+                        moves
+                        |> iv.append(board.CastlingMove(square, square - 2))
+                      False -> moves
+                    }
+                }
+            }
           board.KingSide ->
-            moves |> iv.append(board.CastlingMove(square, square + 2))
+            case can_castle(pos, board.White, KingSide) {
+              True -> moves |> iv.append(board.CastlingMove(square, square + 2))
+              False -> moves
+            }
           board.QueenSide ->
-            moves |> iv.append(board.CastlingMove(square, square - 2))
+            case can_castle(pos, board.White, QueenSide) {
+              True -> moves |> iv.append(board.CastlingMove(square, square - 2))
+              False -> moves
+            }
           board.NoRights -> moves
         }
     }
@@ -188,17 +297,19 @@ fn do_make_sliding_moves(
 ) -> iv.Array(board.Move) {
   let target = square + direction * index
   case iv.get(pos.pieces, target) {
-    Ok(piece) -> case piece {
-      board.Empty -> {
-	let acc = acc |> iv.append(board.NormalMove(square, target))
-	do_make_sliding_moves(pos, square, direction, index + 1, acc)
+    Ok(piece) ->
+      case piece {
+        board.Empty -> {
+          let acc = acc |> iv.append(board.NormalMove(square, target))
+          do_make_sliding_moves(pos, square, direction, index + 1, acc)
+        }
+        board.Occupied(color, _) ->
+          case color != pos.side_to_move {
+            True -> acc |> iv.append(board.NormalMove(square, target))
+            False -> acc
+          }
+        board.OutsideBoard -> acc
       }
-      board.Occupied(color, _) -> case color != pos.side_to_move {
-	True -> acc |> iv.append(board.NormalMove(square, target))
-	False -> acc
-      }
-      board.OutsideBoard -> acc
-    }
     Error(_) -> acc
   }
 }
@@ -237,7 +348,7 @@ pub fn generate_knight_moves(pos: Board) -> iv.Array(board.Move) {
     //     +31 --- +33
     iv.from_list([-33, -31, -18, -14, 14, 18, 31, 33])
     |> iv.filter_map(fn(offset) {
-      case can_move_to(pos, square) {
+      case can_move_to(pos, square + offset) {
         True -> Ok(board.NormalMove(square, square + offset))
         False -> Error("")
       }
@@ -245,15 +356,44 @@ pub fn generate_knight_moves(pos: Board) -> iv.Array(board.Move) {
   })
 }
 
-pub fn generate_pseudolegal_moves(board: Board) -> iv.Array(board.Move) {
+pub fn generate_pseudolegal_moves(pos: Board) -> iv.Array(board.Move) {
   iv.flatten(
     iv.from_list([
-      generate_pawn_moves(board),
-      generate_knight_moves(board),
-      generate_bishop_moves(board),
-      generate_rook_moves(board),
-      generate_queen_moves(board),
-      generate_king_moves(board),
+      generate_pawn_moves(pos),
+      generate_knight_moves(pos),
+      generate_bishop_moves(pos),
+      generate_rook_moves(pos),
+      generate_queen_moves(pos),
+      generate_king_moves(pos),
     ]),
   )
+}
+
+fn is_in_check(pos: Board, color: board.Color) -> Bool {
+  // let the other player have a free turn,
+  let pos = board.Board(..pos, side_to_move: board.other_color(color))
+
+  // and see if they can capture the king
+  generate_pseudolegal_moves(pos)
+  |> iv.any(fn(move) {
+    case pos.pieces |> iv.get(move.to) {
+      Ok(piece) ->
+        case piece {
+          board.Occupied(_, board.King) -> True
+          _ -> False
+        }
+      _ -> False
+    }
+  })
+}
+
+pub fn generate_moves(pos: Board) -> iv.Array(board.Move) {
+  generate_pseudolegal_moves(pos)
+  |> iv.filter(fn(move) {
+    board.move_to_string(move)
+    case board.make_move(pos, move) {
+      Ok(new_pos) -> !is_in_check(new_pos, pos.side_to_move)
+      Error(_) -> False
+    }
+  })
 }

@@ -261,6 +261,11 @@ fn parse_en_passant_target_square(
   acc: Board,
 ) -> Result(Board, String) {
   case input {
+    // some of the test positions in Isaac's testing script are
+    // missing the move counters, so we have to accept FEN strings
+    // that end here
+    "-" -> Ok(acc)
+
     "- " <> rest -> parse_halfmove_clock(rest, acc)
     "a" <> rest -> parse_en_passant_rank(rest, 1, acc)
     "b" <> rest -> parse_en_passant_rank(rest, 2, acc)

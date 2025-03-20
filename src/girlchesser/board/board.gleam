@@ -53,6 +53,47 @@ pub type Move {
   PromotionMove(from: Int, to: Int, promote_to: Piece)
 }
 
+pub fn move_to_string(move: Move) -> String {
+  case move {
+    NormalMove(from, to) | CastlingMove(from, to) | EnPassantMove(from, to) ->
+      do_move_to_string(from, to)
+    PromotionMove(from, to, promote_to) ->
+      do_move_to_string(from, to)
+      <> case promote_to {
+        Bishop -> "b"
+        Knight -> "k"
+        Queen -> "q"
+        Rook -> "r"
+        _ -> ""
+      }
+  }
+}
+
+fn do_move_to_string(from: Int, to: Int) -> String {
+  file_to_string(file(from))
+  <> rank_to_string(rank(from))
+  <> file_to_string(file(to))
+  <> rank_to_string(rank(to))
+}
+
+fn file_to_string(file: Int) -> String {
+  case file {
+    1 -> "a"
+    2 -> "b"
+    3 -> "c"
+    4 -> "d"
+    5 -> "e"
+    6 -> "f"
+    7 -> "g"
+    8 -> "h"
+    _ -> ""
+  }
+}
+
+fn rank_to_string(rank: Int) -> String {
+  int.to_string(rank)
+}
+
 pub fn to_string(board: Board) -> String {
   do_to_string(board.pieces, 0, "")
 }

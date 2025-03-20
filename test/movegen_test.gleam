@@ -108,7 +108,29 @@ pub fn generate_castle_test() {
   )
 }
 
-pub fn generate_knight_moves_test() {
+pub fn castle_through_pieces_test() {
+  let pos =
+    fen.startpos
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_king_moves(pos)
+  |> iv.contains(board.CastlingMove(square(5, 1), square(7, 1)))
+  |> should.be_false
+}
+
+pub fn castle_through_check_test() {
+  let pos =
+    "rn1qkbnr/pppppppp/8/8/2b5/4P3/PPPP1PPP/RNBQK2R w KQkq - 0 1"
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_king_moves(pos)
+  |> iv.contains(board.CastlingMove(square(5, 1), square(7, 1)))
+  |> should.be_false
+}
+
+pub fn generate_knight_moves_1_test() {
   let pos =
     "8/5k2/8/8/N7/8/5K2/8 w - - 0 1"
     |> fen.parse
@@ -123,12 +145,14 @@ pub fn generate_knight_moves_test() {
       board.NormalMove(square(1, 4), square(2, 2)),
     ]),
   )
+  |> should.be_true
 }
 
 pub fn generate_bishop_moves_test() {
-  let pos = "8/5k2/8/1b6/8/8/5K2/8 b - - 0 1"
-  |> fen.parse
-  |> should.be_ok
+  let pos =
+    "8/5k2/8/1b6/8/8/5K2/8 b - - 0 1"
+    |> fen.parse
+    |> should.be_ok
 
   movegen.generate_bishop_moves(pos)
   |> orderless_equal(
@@ -141,7 +165,8 @@ pub fn generate_bishop_moves_test() {
       board.NormalMove(square(2, 5), square(4, 3)),
       board.NormalMove(square(2, 5), square(5, 2)),
       board.NormalMove(square(2, 5), square(6, 1)),
-      board.NormalMove(square(2, 5), square(4, 1)),
-    ])
+      board.NormalMove(square(2, 5), square(1, 4)),
+    ]),
   )
+  |> should.be_true
 }
