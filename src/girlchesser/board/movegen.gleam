@@ -171,21 +171,70 @@ pub fn generate_king_moves(pos: Board) -> iv.Array(board.Move) {
   })
 }
 
-pub fn generate_bishop_moves(board: Board) -> iv.Array(board.Move) {
-  todo
+fn make_sliding_moves(
+  pos: Board,
+  square: Int,
+  direction: Int,
+) -> iv.Array(board.Move) {
+  do_make_sliding_moves(pos, square, direction, 1, iv.from_list([]))
 }
 
-pub fn generate_rook_moves(board: Board) -> iv.Array(board.Move) {
-  todo
+fn do_make_sliding_moves(
+  pos: Board,
+  square: Int,
+  direction: Int,
+  index: Int,
+  acc: iv.Array(board.Move),
+) -> iv.Array(board.Move) {
+  let target = square + direction * index
+  case iv.get(pos.pieces, target) {
+    Ok(piece) -> case piece {
+      board.Empty -> {
+	let acc = acc |> iv.append(board.NormalMove(square, target))
+	do_make_sliding_moves(pos, square, direction, index + 1, acc)
+      }
+      board.Occupied(color, _) -> case color != pos.side_to_move {
+	True -> acc |> iv.append(board.NormalMove(square, target))
+	False -> acc
+      }
+      board.OutsideBoard -> acc
+    }
+    Error(_) -> acc
+  }
 }
 
-pub fn generate_queen_moves(board: Board) -> iv.Array(board.Move) {
-  todo
+pub fn generate_bishop_moves(pos: Board) -> iv.Array(board.Move) {
+  my_pieces(pos, board.Bishop)
+  |> iv.flat_map(fn(square) {
+    iv.from_list([-17, -15, 15, 17])
+    |> iv.flat_map(fn(direction) { make_sliding_moves(pos, square, direction) })
+  })
+}
+
+pub fn generate_rook_moves(pos: Board) -> iv.Array(board.Move) {
+  my_pieces(pos, board.Rook)
+  |> iv.flat_map(fn(square) {
+    iv.from_list([-16, -1, 1, 16])
+    |> iv.flat_map(fn(direction) { make_sliding_moves(pos, square, direction) })
+  })
+}
+
+pub fn generate_queen_moves(pos: Board) -> iv.Array(board.Move) {
+  my_pieces(pos, board.Queen)
+  |> iv.flat_map(fn(square) {
+    iv.from_list([-17, -16, -15, -1, 1, 15, 16, 17])
+    |> iv.flat_map(fn(direction) { make_sliding_moves(pos, square, direction) })
+  })
 }
 
 pub fn generate_knight_moves(pos: Board) -> iv.Array(board.Move) {
   my_pieces(pos, board.Knight)
   |> iv.flat_map(fn(square) {
+    //     -33 --- -31
+    // -18      |      -14
+    //  |------ 0 ------|
+    //  14      |       18
+    //     +31 --- +33
     iv.from_list([-33, -31, -18, -14, 14, 18, 31, 33])
     |> iv.filter_map(fn(offset) {
       case can_move_to(pos, square) {

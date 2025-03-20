@@ -124,3 +124,24 @@ pub fn generate_knight_moves_test() {
     ]),
   )
 }
+
+pub fn generate_bishop_moves_test() {
+  let pos = "8/5k2/8/1b6/8/8/5K2/8 b - - 0 1"
+  |> fen.parse
+  |> should.be_ok
+
+  movegen.generate_bishop_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.NormalMove(square(2, 5), square(1, 6)),
+      board.NormalMove(square(2, 5), square(3, 6)),
+      board.NormalMove(square(2, 5), square(4, 7)),
+      board.NormalMove(square(2, 5), square(5, 8)),
+      board.NormalMove(square(2, 5), square(3, 4)),
+      board.NormalMove(square(2, 5), square(4, 3)),
+      board.NormalMove(square(2, 5), square(5, 2)),
+      board.NormalMove(square(2, 5), square(6, 1)),
+      board.NormalMove(square(2, 5), square(4, 1)),
+    ])
+  )
+}
