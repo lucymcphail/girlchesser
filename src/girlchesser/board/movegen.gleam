@@ -1,5 +1,4 @@
 import girlchesser/board/board.{type Board}
-import gleam/erlang
 import gleam/option
 import iv
 
@@ -184,8 +183,17 @@ pub fn generate_queen_moves(board: Board) -> iv.Array(board.Move) {
   todo
 }
 
-pub fn generate_knight_moves(board: Board) -> iv.Array(board.Move) {
-  todo
+pub fn generate_knight_moves(pos: Board) -> iv.Array(board.Move) {
+  my_pieces(pos, board.Knight)
+  |> iv.flat_map(fn(square) {
+    iv.from_list([-33, -31, -18, -14, 14, 18, 31, 33])
+    |> iv.filter_map(fn(offset) {
+      case can_move_to(pos, square) {
+        True -> Ok(board.NormalMove(square, square + offset))
+        False -> Error("")
+      }
+    })
+  })
 }
 
 pub fn generate_pseudolegal_moves(board: Board) -> iv.Array(board.Move) {

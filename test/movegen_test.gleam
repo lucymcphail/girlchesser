@@ -94,15 +94,33 @@ pub fn generate_king_moves_test() {
 }
 
 pub fn generate_castle_test() {
-  let pos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w K - 0 1"
-  |> fen.parse
-  |> should.be_ok
+  let pos =
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQK2R w K - 0 1"
+    |> fen.parse
+    |> should.be_ok
 
   movegen.generate_king_moves(pos)
   |> orderless_equal(
     iv.from_list([
       board.NormalMove(square(5, 1), square(6, 1)),
       board.CastlingMove(square(5, 1), square(7, 1)),
-    ])
+    ]),
+  )
+}
+
+pub fn generate_knight_moves_test() {
+  let pos =
+    "8/5k2/8/8/N7/8/5K2/8 w - - 0 1"
+    |> fen.parse
+    |> should.be_ok
+
+  movegen.generate_knight_moves(pos)
+  |> orderless_equal(
+    iv.from_list([
+      board.NormalMove(square(1, 4), square(2, 6)),
+      board.NormalMove(square(1, 4), square(3, 5)),
+      board.NormalMove(square(1, 4), square(3, 3)),
+      board.NormalMove(square(1, 4), square(2, 2)),
+    ]),
   )
 }
