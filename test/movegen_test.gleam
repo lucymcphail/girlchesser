@@ -1,5 +1,6 @@
-import girlchesser/board/board.{square}
-import girlchesser/board/movegen
+import girlchesser/board
+import girlchesser/board/position
+import girlchesser/engine/movegen
 import girlchesser/fen
 import gleam/dict
 import gleam/list
@@ -20,25 +21,25 @@ pub fn test_generate_pawn_moves_1_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_pawn_moves(pos)
+  movegen.pawn(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(1, 2), square(1, 3)),
-      board.NormalMove(square(1, 2), square(1, 4)),
-      board.NormalMove(square(2, 2), square(2, 3)),
-      board.NormalMove(square(2, 2), square(2, 4)),
-      board.NormalMove(square(3, 2), square(3, 3)),
-      board.NormalMove(square(3, 2), square(3, 4)),
-      board.NormalMove(square(4, 2), square(4, 3)),
-      board.NormalMove(square(4, 2), square(4, 4)),
-      board.NormalMove(square(5, 2), square(5, 3)),
-      board.NormalMove(square(5, 2), square(5, 4)),
-      board.NormalMove(square(6, 2), square(6, 3)),
-      board.NormalMove(square(6, 2), square(6, 4)),
-      board.NormalMove(square(7, 2), square(7, 3)),
-      board.NormalMove(square(7, 2), square(7, 4)),
-      board.NormalMove(square(8, 2), square(8, 3)),
-      board.NormalMove(square(8, 2), square(8, 4)),
+      board.Move(position.from(1, 2), position.from(1, 3)),
+      board.Move(position.from(1, 2), position.from(1, 4)),
+      board.Move(position.from(2, 2), position.from(2, 3)),
+      board.Move(position.from(2, 2), position.from(2, 4)),
+      board.Move(position.from(3, 2), position.from(3, 3)),
+      board.Move(position.from(3, 2), position.from(3, 4)),
+      board.Move(position.from(4, 2), position.from(4, 3)),
+      board.Move(position.from(4, 2), position.from(4, 4)),
+      board.Move(position.from(5, 2), position.from(5, 3)),
+      board.Move(position.from(5, 2), position.from(5, 4)),
+      board.Move(position.from(6, 2), position.from(6, 3)),
+      board.Move(position.from(6, 2), position.from(6, 4)),
+      board.Move(position.from(7, 2), position.from(7, 3)),
+      board.Move(position.from(7, 2), position.from(7, 4)),
+      board.Move(position.from(8, 2), position.from(8, 3)),
+      board.Move(position.from(8, 2), position.from(8, 4)),
     ]),
   )
   |> should.be_true
@@ -50,11 +51,11 @@ pub fn generate_en_passant_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_pawn_moves(pos)
+  movegen.pawn(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(5, 5), square(5, 6)),
-      board.EnPassantMove(square(5, 5), square(4, 6)),
+      board.Move(position.from(5, 5), position.from(5, 6)),
+      board.EnPassant(position.from(5, 5), position.from(4, 6)),
     ]),
   )
 }
@@ -65,13 +66,13 @@ pub fn generate_promotion_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_pawn_moves(pos)
+  movegen.pawn(pos)
   |> orderless_equal(
     iv.from_list([
-      board.PromotionMove(square(4, 7), square(4, 8), board.Knight),
-      board.PromotionMove(square(4, 7), square(4, 8), board.Bishop),
-      board.PromotionMove(square(4, 7), square(4, 8), board.Rook),
-      board.PromotionMove(square(4, 7), square(4, 8), board.Queen),
+      board.Promote(position.from(4, 7), position.from(4, 8), board.Knight),
+      board.Promote(position.from(4, 7), position.from(4, 8), board.Bishop),
+      board.Promote(position.from(4, 7), position.from(4, 8), board.Rook),
+      board.Promote(position.from(4, 7), position.from(4, 8), board.Queen),
     ]),
   )
 }
@@ -82,13 +83,13 @@ pub fn generate_king_moves_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_king_moves(pos)
+  movegen.king(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(1, 5), square(1, 6)),
-      board.NormalMove(square(1, 5), square(2, 5)),
-      board.NormalMove(square(1, 5), square(2, 4)),
-      board.NormalMove(square(1, 5), square(1, 4)),
+      board.Move(position.from(1, 5), position.from(1, 6)),
+      board.Move(position.from(1, 5), position.from(2, 5)),
+      board.Move(position.from(1, 5), position.from(2, 4)),
+      board.Move(position.from(1, 5), position.from(1, 4)),
     ]),
   )
 }
@@ -99,11 +100,11 @@ pub fn generate_castle_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_king_moves(pos)
+  movegen.king(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(5, 1), square(6, 1)),
-      board.CastlingMove(square(5, 1), square(7, 1)),
+      board.Move(position.from(5, 1), position.from(6, 1)),
+      board.Castle(position.from(5, 1), position.from(7, 1)),
     ]),
   )
 }
@@ -114,8 +115,8 @@ pub fn castle_through_pieces_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_king_moves(pos)
-  |> iv.contains(board.CastlingMove(square(5, 1), square(7, 1)))
+  movegen.king(pos)
+  |> iv.contains(board.Castle(position.from(5, 1), position.from(7, 1)))
   |> should.be_false
 }
 
@@ -125,8 +126,8 @@ pub fn castle_through_check_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_king_moves(pos)
-  |> iv.contains(board.CastlingMove(square(5, 1), square(7, 1)))
+  movegen.king(pos)
+  |> iv.contains(board.Castle(position.from(5, 1), position.from(7, 1)))
   |> should.be_false
 }
 
@@ -136,13 +137,13 @@ pub fn generate_knight_moves_1_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_knight_moves(pos)
+  movegen.knight(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(1, 4), square(2, 6)),
-      board.NormalMove(square(1, 4), square(3, 5)),
-      board.NormalMove(square(1, 4), square(3, 3)),
-      board.NormalMove(square(1, 4), square(2, 2)),
+      board.Move(position.from(1, 4), position.from(2, 6)),
+      board.Move(position.from(1, 4), position.from(3, 5)),
+      board.Move(position.from(1, 4), position.from(3, 3)),
+      board.Move(position.from(1, 4), position.from(2, 2)),
     ]),
   )
   |> should.be_true
@@ -154,18 +155,18 @@ pub fn generate_bishop_moves_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.generate_bishop_moves(pos)
+  movegen.bishop(pos)
   |> orderless_equal(
     iv.from_list([
-      board.NormalMove(square(2, 5), square(1, 6)),
-      board.NormalMove(square(2, 5), square(3, 6)),
-      board.NormalMove(square(2, 5), square(4, 7)),
-      board.NormalMove(square(2, 5), square(5, 8)),
-      board.NormalMove(square(2, 5), square(3, 4)),
-      board.NormalMove(square(2, 5), square(4, 3)),
-      board.NormalMove(square(2, 5), square(5, 2)),
-      board.NormalMove(square(2, 5), square(6, 1)),
-      board.NormalMove(square(2, 5), square(1, 4)),
+      board.Move(position.from(2, 5), position.from(1, 6)),
+      board.Move(position.from(2, 5), position.from(3, 6)),
+      board.Move(position.from(2, 5), position.from(4, 7)),
+      board.Move(position.from(2, 5), position.from(5, 8)),
+      board.Move(position.from(2, 5), position.from(3, 4)),
+      board.Move(position.from(2, 5), position.from(4, 3)),
+      board.Move(position.from(2, 5), position.from(5, 2)),
+      board.Move(position.from(2, 5), position.from(6, 1)),
+      board.Move(position.from(2, 5), position.from(1, 4)),
     ]),
   )
   |> should.be_true

@@ -2,7 +2,7 @@
 version: 1.2.6
 title: [board] Scandinavian defence
 file: ./test/board_test.gleam
-test_name: make_move_1_test
+test_name: move_1_test
 ---
 ♜♞♝ ♚♝♞♜
 ♟♟♟ ♟♟♟♟

@@ -1,14 +1,17 @@
 // IMPORTS ---------------------------------------------------------------------
 
-import girlchesser/board/board.{type Board, Board}
+import girlchesser/board.{type Board, Board}
+import girlchesser/board/position
 import gleam/int
 import gleam/list
 import gleam/option
 import iv
 
-//
+// CONSTANTS -------------------------------------------------------------------
 
 pub const startpos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+// CONSTRUCTORS ----------------------------------------------------------------
 
 /// <FEN> ::= <Piece Placement>
 ///       ' ' <Side to move>
@@ -17,7 +20,7 @@ pub const startpos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 ///       ' ' <Halfmove clock>
 ///       ' ' <Fullmove counter>
 ///
-pub fn parse(input: String) -> Result(_, String) {
+pub fn parse(input: String) -> Result(Board, String) {
   let init =
     Board(
       pieces: iv.initialise(36, fn(_) { board.OutsideBoard }),
@@ -26,6 +29,7 @@ pub fn parse(input: String) -> Result(_, String) {
       black_castle_rights: board.NoRights,
       en_passant: option.None,
     )
+
   parse_piece_placement(input, init)
 }
 
@@ -183,7 +187,7 @@ fn parse_side_to_move(input: String, acc: Board) -> Result(Board, String) {
   let guards = list.repeat(board.OutsideBoard, 36)
   let pieces = iv.append_list(acc.pieces, guards)
   let acc = Board(..acc, pieces:)
-  
+
   case input {
     "w " <> rest ->
       parse_castling_ability(rest, Board(..acc, side_to_move: board.White))
@@ -288,13 +292,13 @@ fn parse_en_passant_rank(
     "3 " <> rest ->
       parse_halfmove_clock(
         rest,
-        Board(..acc, en_passant: option.Some(board.square(file, 3))),
+        Board(..acc, en_passant: option.Some(position.from(file:, rank: 3))),
       )
 
     "6 " <> rest ->
       parse_halfmove_clock(
         rest,
-        Board(..acc, en_passant: option.Some(board.square(file, 6))),
+        Board(..acc, en_passant: option.Some(position.from(file:, rank: 6))),
       )
 
     _ -> Error(input)
@@ -365,7 +369,7 @@ fn parse_fullmove_counter_digits(
     | "9" as digit <> rest ->
       parse_fullmove_counter_digits(rest, counter <> digit, acc)
 
-    "" -> Ok(acc)
+    "" | " " <> _ -> Ok(acc)
 
     _ -> Error(input)
   }

@@ -5,7 +5,7 @@
 // IMPORTS ---------------------------------------------------------------------
 
 import birdie
-import girlchesser/board/board
+import girlchesser/board
 import girlchesser/fen
 import gleeunit/should
 
