@@ -12,6 +12,9 @@ pub type Response {
   UciOk
   ReadyOk
   BestMove(move: Move, ponder: Option(Move))
+
+  // nonstandard extensions
+  PrintBoard(board: board.Board)
 }
 
 // CONVERSIONS -----------------------------------------------------------------
@@ -32,6 +35,10 @@ pub fn best_move(move: Move, ponder: Option(Move)) -> Nil {
   BestMove(move: move, ponder: ponder) |> to_string |> io.println
 }
 
+pub fn print_board(board: board.Board) -> Nil {
+  PrintBoard(board) |> to_string |> io.println
+}
+
 fn to_string(response: Response) -> String {
   case response {
     Id(name) -> "id name " <> name
@@ -45,6 +52,8 @@ fn to_string(response: Response) -> String {
     BestMove(move, Some(ponder)) -> "
         bestmove " <> move.to_string(move) <> " ponder " <> move.to_string(
         ponder,
-      )
+	)
+
+    PrintBoard(board) -> board.to_string(board)
   }
 }

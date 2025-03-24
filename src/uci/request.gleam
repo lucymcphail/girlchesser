@@ -19,6 +19,9 @@ pub type Request {
   Stop
   Ponderhit
   Quit
+
+  // nonstandard extensions
+  PrintBoard
 }
 
 // CONSTRUCTORS ----------------------------------------------------------------
@@ -55,6 +58,8 @@ pub fn parse(request: String) -> Result(Request, Nil) {
     "uci" -> Ok(Uci)
 
     "ucinewgame" -> Ok(UciNewGame)
+
+    "printboard" -> Ok(PrintBoard)
 
     _ -> Error(Nil)
   }

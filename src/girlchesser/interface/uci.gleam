@@ -66,6 +66,11 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
         actor.continue(state)
       }
 
+      Ok(request.PrintBoard) -> {
+	response.print_board(state.board)
+	actor.continue(state)
+      }
+
       _ -> actor.continue(state)
     }
   })
