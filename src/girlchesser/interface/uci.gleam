@@ -31,10 +31,6 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
     // Spawn a process that will poll stdin for input
     let _ = listen_for_input(self)
 
-    //
-    response.id()
-    response.uci_ok()
-
     actor.Ready(state, selector)
   }
 
@@ -43,6 +39,12 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
     let command = request.parse(message)
 
     case command {
+      Ok(request.Uci) -> {
+	response.id()
+	response.uci_ok()
+	actor.continue(state)
+      }
+
       Ok(request.Isready) -> {
         response.ready_ok()
         actor.continue(state)
@@ -53,7 +55,7 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
       Ok(request.Debug(on: False)) ->
         actor.continue(State(..state, debug: False))
 
-      Ok(request.Position(board:)) if state.debug -> {
+      Ok(request.Position(board:)) -> {
         actor.continue(State(..state, board:))
       }
 
