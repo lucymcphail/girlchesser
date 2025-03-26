@@ -62,7 +62,6 @@ pub fn pawn(board: Board) -> List(Move) {
   |> pawn_two_space_moves(board, square, pawn_direction)
   |> pawn_capture_moves(board, square, square + pawn_direction - 1)
   |> pawn_capture_moves(board, square, square + pawn_direction + 1)
-  |> pawn_promotion_moves(board, square, square + pawn_direction)
 }
 
 fn pawn_one_space_moves(
@@ -74,8 +73,11 @@ fn pawn_one_space_moves(
   let is_promoting = position.rank(target) == 1 || position.rank(target) == 8
 
   case iv.get(board.pieces, target) {
-    // don't emit a normal move if we're actually promoting
-    Ok(board.Empty) if !is_promoting -> [board.Move(square, target), ..moves]
+    Ok(board.Empty) if is_promoting ->
+      list.append(promotions(square, target), moves)
+
+    Ok(board.Empty) -> [board.Move(square, target), ..moves]
+
     _ -> moves
   }
 }
@@ -111,38 +113,32 @@ fn pawn_capture_moves(
   square: Position,
   target: Position,
 ) -> List(Move) {
-  case iv.get(board.pieces, target) {
-    Ok(board.Occupied(colour:, ..)) if colour != board.side_to_move -> [
-      board.Move(square, target),
-      ..moves
-    ]
+  let is_promoting = position.rank(target) == 1 || position.rank(target) == 8
 
-    _ if board.en_passant == option.Some(target) -> [
-      board.EnPassant(square, target),
-      ..moves
-    ]
+  case iv.get(board.pieces, target) {
+    Ok(board.Occupied(colour:, ..)) if colour != board.side_to_move ->
+      case is_promoting {
+        True -> list.append(promotions(square, target), moves)
+        False -> [board.Move(square, target), ..moves]
+      }
+
+    _ if board.en_passant == option.Some(target) ->
+      case is_promoting {
+        True -> list.append(promotions(square, target), moves)
+        False -> [board.EnPassant(square, target), ..moves]
+      }
 
     _ -> moves
   }
 }
 
-fn pawn_promotion_moves(
-  moves: List(Move),
-  board: Board,
-  square: Position,
-  target: Position,
-) -> List(Move) {
-  case iv.get(board.pieces, target), position.rank(target) {
-    Ok(board.Empty), 1 | Ok(board.Empty), 8 -> [
-      board.Promote(square, target, board.Knight),
-      board.Promote(square, target, board.Bishop),
-      board.Promote(square, target, board.Rook),
-      board.Promote(square, target, board.Queen),
-      ..moves
-    ]
-
-    _, _ -> moves
-  }
+fn promotions(source: Position, target: Position) {
+  [
+    board.Promote(source, target, board.Knight),
+    board.Promote(source, target, board.Bishop),
+    board.Promote(source, target, board.Rook),
+    board.Promote(source, target, board.Queen),
+  ]
 }
 
 // KING MOVES ------------------------------------------------------------------
