@@ -112,7 +112,7 @@ pub fn to_string(move: Move) -> String {
       do_move_to_string(from, to)
       <> case promote_to {
         board.Bishop -> "b"
-        board.Knight -> "k"
+        board.Knight -> "n"
         board.Queen -> "q"
         board.Rook -> "r"
         _ -> ""
