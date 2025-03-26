@@ -71,8 +71,11 @@ fn pawn_one_space_moves(
   square: Position,
   target: Position,
 ) -> List(Move) {
+  let is_promoting = position.rank(target) == 1 || position.rank(target) == 8
+
   case iv.get(board.pieces, target) {
-    Ok(board.Empty) -> [board.Move(square, target), ..moves]
+    // don't emit a normal move if we're actually promoting
+    Ok(board.Empty) if !is_promoting -> [board.Move(square, target), ..moves]
     _ -> moves
   }
 }
@@ -279,7 +282,7 @@ fn can_castle(
       case is_in_check(board) {
         True -> False
         False -> {
-	  // finally, check that we're not castling through check
+          // finally, check that we're not castling through check
           let must_not_be_in_check_squares = list.take(must_be_empty_squares, 2)
 
           use square <- list.all(must_not_be_in_check_squares)
