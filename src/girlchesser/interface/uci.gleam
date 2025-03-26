@@ -3,6 +3,7 @@
 
 // IMPORTS ---------------------------------------------------------------------
 
+import girlchesser/interface/perft
 import girlchesser/board.{type Board}
 import girlchesser/engine.{type Engine}
 import girlchesser/fen
@@ -69,6 +70,11 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
 
       Ok(request.PrintBoard) -> {
 	response.print_board(state.board)
+	actor.continue(state)
+      }
+
+      Ok(request.GoPerft(depth)) -> {
+	perft.perft(state.board, depth)
 	actor.continue(state)
       }
 

@@ -1,5 +1,6 @@
 // IMPORTS ---------------------------------------------------------------------
 
+import gleam/int
 import girlchesser/board.{type Board}
 import girlchesser/board/move
 import girlchesser/fen
@@ -22,6 +23,7 @@ pub type Request {
 
   // nonstandard extensions
   PrintBoard
+  GoPerft(depth: Int)
 }
 
 // CONSTRUCTORS ----------------------------------------------------------------
@@ -34,6 +36,10 @@ pub fn parse(request: String) -> Result(Request, Nil) {
       rest
       |> parse_whitespace
       |> parse_debug
+
+    "go perft " <> rest ->
+      rest
+      |> parse_perft_depth
 
     "go" <> _ -> Ok(Go)
 
@@ -128,6 +134,15 @@ fn parse_position_moves(request: String, board: Board) -> Result(Request, Nil) {
         _, _ -> Error(Nil)
       }
     Error(_) -> Error(Nil)
+  }
+}
+
+// PARSE PERFT DEPTH -----------------------------------------------------------
+
+fn parse_perft_depth(request: String) -> Result(Request, Nil) {
+  case int.parse(request) {
+    Ok(depth) -> Ok(GoPerft(depth))
+    _ -> Error(Nil)
   }
 }
 
