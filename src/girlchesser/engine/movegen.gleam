@@ -178,6 +178,10 @@ fn king_one_space_moves(
 
   case iv.get(board.pieces, target) {
     Ok(board.Empty) -> [board.Move(square, target), ..moves]
+    Ok(board.Occupied(colour, _)) if colour != board.side_to_move -> [
+      board.Move(square, target),
+      ..moves
+    ]
     _ -> moves
   }
 }
@@ -238,37 +242,64 @@ fn can_castle(
     board.White -> position.from(5, 1)
   }
 
-  let castling_squares = case colour {
-    board.Black ->
-      case direction {
-        KingSide -> [position.from(6, 8), position.from(7, 8)]
-        QueenSide -> [
-          position.from(2, 8),
-          position.from(3, 8),
-          position.from(4, 8),
-        ]
-      }
-
-    board.White ->
-      case direction {
-        KingSide -> [position.from(6, 1), position.from(7, 1)]
-        QueenSide -> [
-          position.from(2, 1),
-          position.from(3, 1),
-          position.from(4, 1),
-        ]
-      }
+  let castling_rank = case colour {
+    board.Black -> 8
+    board.White -> 1
   }
 
-  use square <- list.all(castling_squares)
-  use <- bool.guard(iv.get(board.pieces, square) != Ok(board.Empty), False)
+  let must_be_empty_squares = case direction {
+    KingSide -> [
+      position.from(6, castling_rank),
+      position.from(7, castling_rank),
+    ]
+    QueenSide -> [
+      position.from(3, castling_rank),
+      position.from(4, castling_rank),
+      // this square needs to be empty to castle queenside, but since
+      // the king never moves through it, we don't need to check
+      // whether this square is attacked.
+      position.from(2, castling_rank),
+    ]
+  }
 
-  let pieces =
-    board.pieces
-    |> iv.try_set(source_square, board.Empty)
-    |> iv.try_set(square, board.Occupied(board.side_to_move, board.King))
+  // first, check if all the squares we're trying to castle through are empty
+  case
+    list.all(must_be_empty_squares, fn(square) {
+      case iv.get(board.pieces, square) {
+        Ok(board.Empty) -> True
+        _ -> False
+      }
+    })
+  {
+    False -> False
+    True ->
+      // next, check if we're currently in check (doing this after
+      // ruling out the castle being blocked, in order to potentially
+      // save the expensive check computation)
+      case is_in_check(board) {
+        True -> False
+        False -> {
+	  // finally, check that we're not castling through check
+          let must_not_be_in_check_squares = list.take(must_be_empty_squares, 2)
 
-  !is_in_check(board.Board(..board, pieces:))
+          use square <- list.all(must_not_be_in_check_squares)
+          use <- bool.guard(
+            iv.get(board.pieces, square) != Ok(board.Empty),
+            False,
+          )
+
+          let pieces =
+            board.pieces
+            |> iv.try_set(source_square, board.Empty)
+            |> iv.try_set(
+              square,
+              board.Occupied(board.side_to_move, board.King),
+            )
+
+          !is_in_check(board.Board(..board, pieces:))
+        }
+      }
+  }
 }
 
 // ROOK MOVES ------------------------------------------------------------------
