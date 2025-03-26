@@ -8,15 +8,15 @@ import girlchesser/board/position.{type Position}
 import gleam/bool
 import gleam/list
 import gleam/option
-import iv.{type Array}
+import iv
 
 // MOVES -----------------------------------------------------------------------
 
 /// Generate all valid moves for the current player. These moves are guaranteed
 /// to never leave the player in check.
 ///
-pub fn legal(board: Board) -> Array(Move) {
-  use move <- iv.filter(pseudolegal(board))
+pub fn legal(board: Board) -> List(Move) {
+  use move <- list.filter(pseudolegal(board))
   let next = board.move(board, move) |> board.swap_sides
 
   !is_in_check(next)
@@ -25,8 +25,8 @@ pub fn legal(board: Board) -> Array(Move) {
 /// Generate all moves that the current player can make, regardless of whether
 /// they would leave the player in check.
 ///
-pub fn pseudolegal(board: Board) -> Array(Move) {
-  iv.concat_list([
+pub fn pseudolegal(board: Board) -> List(Move) {
+  list.flatten([
     pawn(board),
     knight(board),
     bishop(board),
@@ -48,13 +48,13 @@ pub fn pseudolegal(board: Board) -> Array(Move) {
 ///   - Capturing diagonally (including en passant)
 ///   - Promoting
 ///
-pub fn pawn(board: Board) -> Array(Move) {
+pub fn pawn(board: Board) -> List(Move) {
   let pawn_direction = case board.side_to_move {
     board.Black -> 16
     board.White -> -16
   }
 
-  let empty = iv.new()
+  let empty = list.new()
   use square <- generate_moves(board, for: board.Pawn)
 
   empty
@@ -66,23 +66,23 @@ pub fn pawn(board: Board) -> Array(Move) {
 }
 
 fn pawn_one_space_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   target: Position,
-) -> Array(Move) {
+) -> List(Move) {
   case iv.get(board.pieces, target) {
-    Ok(board.Empty) -> iv.append(moves, board.Move(square, target))
+    Ok(board.Empty) -> [board.Move(square, target), ..moves]
     _ -> moves
   }
 }
 
 fn pawn_two_space_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   direction: Int,
-) -> Array(Move) {
+) -> List(Move) {
   let starting_rank = case board.side_to_move {
     board.Black -> 7
     board.White -> 2
@@ -93,44 +93,50 @@ fn pawn_two_space_moves(
   let target = iv.get(board.pieces, square + direction * 2)
 
   case in_front, target {
-    Ok(board.Empty), Ok(board.Empty) ->
-      iv.append(moves, board.Move(square, square + direction * 2))
+    Ok(board.Empty), Ok(board.Empty) -> [
+      board.Move(square, square + direction * 2),
+      ..moves
+    ]
 
     _, _ -> moves
   }
 }
 
 fn pawn_capture_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   target: Position,
-) -> Array(Move) {
+) -> List(Move) {
   case iv.get(board.pieces, target) {
-    Ok(board.Occupied(colour:, ..)) if colour != board.side_to_move ->
-      iv.append(moves, board.Move(square, target))
+    Ok(board.Occupied(colour:, ..)) if colour != board.side_to_move -> [
+      board.Move(square, target),
+      ..moves
+    ]
 
-    _ if board.en_passant == option.Some(target) ->
-      iv.append(moves, board.EnPassant(square, target))
+    _ if board.en_passant == option.Some(target) -> [
+      board.EnPassant(square, target),
+      ..moves
+    ]
 
     _ -> moves
   }
 }
 
 fn pawn_promotion_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   target: Position,
-) -> Array(Move) {
+) -> List(Move) {
   case iv.get(board.pieces, target), position.rank(target) {
-    Ok(board.Empty), 1 | Ok(board.Empty), 8 ->
-      iv.append_list(moves, [
-        board.Promote(square, target, board.Knight),
-        board.Promote(square, target, board.Bishop),
-        board.Promote(square, target, board.Rook),
-        board.Promote(square, target, board.Queen),
-      ])
+    Ok(board.Empty), 1 | Ok(board.Empty), 8 -> [
+      board.Promote(square, target, board.Knight),
+      board.Promote(square, target, board.Bishop),
+      board.Promote(square, target, board.Rook),
+      board.Promote(square, target, board.Queen),
+      ..moves
+    ]
 
     _, _ -> moves
   }
@@ -146,8 +152,8 @@ fn pawn_promotion_moves(
 ///   - Moving one square in any direction
 ///   - Castling
 ///
-pub fn king(board: Board) -> Array(Move) {
-  let empty = iv.new()
+pub fn king(board: Board) -> List(Move) {
+  let empty = list.new()
   let rights = case board.side_to_move {
     board.Black -> board.black_castle_rights
     board.White -> board.white_castle_rights
@@ -163,25 +169,25 @@ pub fn king(board: Board) -> Array(Move) {
 const king_directions = [-17, -16, -15, -1, 1, 15, 16, 17]
 
 fn king_one_space_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
-) -> Array(Move) {
+) -> List(Move) {
   use moves, direction <- list.fold(king_directions, moves)
   let target = square + direction
 
   case iv.get(board.pieces, target) {
-    Ok(board.Empty) -> iv.append(moves, board.Move(square, target))
+    Ok(board.Empty) -> [board.Move(square, target), ..moves]
     _ -> moves
   }
 }
 
 fn king_castling_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   rights: CastleRights,
-) -> Array(Move) {
+) -> List(Move) {
   let can_castle_kingside = can_castle(board, board.side_to_move, KingSide)
   let kingside_castle = board.Castle(square, square + 2)
 
@@ -190,16 +196,16 @@ fn king_castling_moves(
 
   case rights {
     board.Both if can_castle_kingside && can_castle_queenside ->
-      iv.append_list(moves, [kingside_castle, queenside_castle])
+      [kingside_castle, queenside_castle, ..moves]
 
-    board.Both if can_castle_kingside -> iv.append(moves, kingside_castle)
+    board.Both if can_castle_kingside -> [kingside_castle, ..moves]
 
-    board.Both if can_castle_queenside -> iv.append(moves, queenside_castle)
+    board.Both if can_castle_queenside -> [queenside_castle, ..moves]
 
-    board.KingSide if can_castle_kingside -> iv.append(moves, kingside_castle)
+    board.KingSide if can_castle_kingside -> [kingside_castle, ..moves]
 
     board.QueenSide if can_castle_queenside ->
-      iv.append(moves, queenside_castle)
+      [queenside_castle, ..moves]
 
     _ -> moves
   }
@@ -260,8 +266,8 @@ const rook_directions = [-16, -1, 1, 16]
 /// Generate all possible pseudolegal rook moves. These moves may leave the player
 /// in check!
 ///
-pub fn rook(board: Board) -> Array(board.Move) {
-  let empty = iv.new()
+pub fn rook(board: Board) -> List(board.Move) {
+  let empty = list.new()
   use square <- generate_moves(board, for: board.Rook)
   use moves, direction <- list.fold(rook_directions, empty)
 
@@ -275,8 +281,8 @@ const bishop_directions = [-17, -15, 15, 17]
 /// Generate all possible pseudolegal bishop moves. These moves may leave the player
 /// in check!
 ///
-pub fn bishop(board: Board) -> Array(board.Move) {
-  let empty = iv.new()
+pub fn bishop(board: Board) -> List(board.Move) {
+  let empty = list.new()
   use square <- generate_moves(board, for: board.Bishop)
   use moves, direction <- list.fold(bishop_directions, empty)
 
@@ -290,8 +296,8 @@ const queen_directions = [-17, -16, -15, -1, 1, 15, 16, 17]
 /// Generate all possible pseudolegal queen moves. These moves may leave the player
 /// in check!
 ///
-pub fn queen(board: Board) -> Array(board.Move) {
-  let empty = iv.new()
+pub fn queen(board: Board) -> List(board.Move) {
+  let empty = list.new()
   use square <- generate_moves(board, for: board.Queen)
   use moves, direction <- list.fold(queen_directions, empty)
 
@@ -310,16 +316,16 @@ const knight_directions = [-33, -31, -18, -14, 14, 18, 31, 33]
 /// Generate all possible pseudolegal knight moves. These moves may leave the player
 /// in check!
 ///
-pub fn knight(board: Board) -> Array(board.Move) {
-  let empty = iv.new()
+pub fn knight(board: Board) -> List(board.Move) {
+  let empty = list.new()
   use square <- generate_moves(board, for: board.Knight)
   use moves, direction <- list.fold(knight_directions, empty)
 
   case iv.get(board.pieces, square + direction) {
     Ok(board.Occupied(colour, _)) if colour != board.side_to_move ->
-      iv.append(moves, board.Move(square, square + direction))
+      [board.Move(square, square + direction), ..moves]
 
-    Ok(board.Empty) -> iv.append(moves, board.Move(square, square + direction))
+    Ok(board.Empty) -> [board.Move(square, square + direction), ..moves]
 
     _ -> moves
   }
@@ -330,15 +336,15 @@ pub fn knight(board: Board) -> Array(board.Move) {
 fn generate_moves(
   board: Board,
   for piece: Piece,
-  using generator: fn(Position) -> Array(Move),
-) -> Array(Move) {
-  use moves, square, index <- iv.index_fold(board.pieces, iv.new())
+  using generator: fn(Position) -> List(Move),
+) -> List(Move) {
+  use moves, square, index <- list.index_fold(board.pieces |> iv.to_list, list.new())
 
   case square {
     board.Empty | board.OutsideBoard -> moves
     board.Occupied(..) -> {
       case square.colour == board.side_to_move && square.piece == piece {
-        True -> iv.concat(moves, generator(index))
+        True -> list.append(generator(index), moves)
         False -> moves
       }
     }
@@ -346,22 +352,21 @@ fn generate_moves(
 }
 
 fn generate_sliding_moves(
-  moves: Array(Move),
+  moves: List(Move),
   board: Board,
   square: Position,
   direction: Int,
   index: Int,
-) -> iv.Array(board.Move) {
+) -> List(board.Move) {
   let target = square + direction * index
 
   case iv.get(board.pieces, target) {
     Ok(board.Empty) ->
-      moves
-      |> iv.append(board.Move(square, target))
+      [board.Move(square, target), ..moves]
       |> generate_sliding_moves(board, square, direction, index + 1)
 
     Ok(board.Occupied(colour, _)) if colour != board.side_to_move ->
-      moves |> iv.append(board.Move(square, target))
+      [board.Move(square, target), ..moves]
 
     _ -> moves
   }
@@ -371,7 +376,7 @@ fn is_in_check(board: Board) -> Bool {
   // let the other player have a free turn,
   let board = board.swap_sides(board)
   // and see if they can capture the king
-  use move <- iv.any(pseudolegal(board))
+  use move <- list.any(pseudolegal(board))
 
   case iv.get(board.pieces, move.to) {
     Ok(board.Occupied(_, board.King)) -> True

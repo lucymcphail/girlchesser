@@ -1,12 +1,11 @@
 // IMPORTS ---------------------------------------------------------------------
 
+import gleam/list
 import girlchesser/board.{type Board, type Move}
 import girlchesser/engine/movegen
 import girlchesser/fen
 import gleam/erlang/process.{type Subject}
-import gleam/int
 import gleam/otp/actor.{type StartError}
-import iv
 
 // MAIN ------------------------------------------------------------------------
 
@@ -41,8 +40,7 @@ pub fn start() -> Result(Engine, StartError) {
 
 fn handle_move(board: Board, _: List(Move), reply: Subject(Move)) -> Board {
   let moves = movegen.legal(board)
-  let index = int.random(iv.length(moves))
-  let assert Ok(move) = iv.get(moves, index)
+  let assert Ok(move) = list.first(moves)
 
   process.send(reply, move)
 
