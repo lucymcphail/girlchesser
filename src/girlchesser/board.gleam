@@ -282,11 +282,15 @@ fn apply_move_rules(pieces: Pieces, move: Move, side: Colour) -> Pieces {
   }
 }
 
-pub fn swap_sides(board: Board) -> Board {
-  Board(..board, side_to_move: case board.side_to_move {
+pub fn other_colour(colour: Colour) -> Colour {
+  case colour {
     Black -> White
     White -> Black
-  })
+  }
+}
+
+pub fn swap_sides(board: Board) -> Board {
+  Board(..board, side_to_move: other_colour(board.side_to_move))
 }
 
 // CONVERSIONS -----------------------------------------------------------------

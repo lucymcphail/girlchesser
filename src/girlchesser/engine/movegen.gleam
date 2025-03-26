@@ -392,13 +392,84 @@ fn generate_sliding_moves(
 }
 
 fn is_in_check(board: Board) -> Bool {
-  // let the other player have a free turn,
-  let board = board.swap_sides(board)
-  // and see if they can capture the king
-  use move <- list.any(pseudolegal(board))
+  // legal chess positions have exactly one king of each colour, so it's
+  // fine to assert here
+  let assert Ok(king) =
+    iv.index_of(
+      board.pieces,
+      of: board.Occupied(board.side_to_move, board.King),
+    )
 
-  case iv.get(board.pieces, move.to) {
-    Ok(board.Occupied(_, board.King)) -> True
+  check_straight_attacks(board, king)
+  || check_diagonal_attacks(board, king)
+  || check_knight_attacks(board, king)
+  || check_pawn_attacks(board, king)
+}
+
+fn check_pawn_attacks(board: Board, king: Position) -> Bool {
+  let pawn_directions = case board.side_to_move {
+    board.White -> [-17, -15]
+    board.Black -> [15, 17]
+  }
+
+  use offset <- list.any(pawn_directions)
+
+  let pawn_square = king + offset
+  let enemy_pawn =
+    board.Occupied(board.other_colour(board.side_to_move), board.Pawn)
+
+  case iv.get(board.pieces, pawn_square) {
+    Ok(piece) if piece == enemy_pawn -> True
     _ -> False
+  }
+}
+
+fn check_knight_attacks(board: Board, king: Position) -> Bool {
+  use offset <- list.any(knight_directions)
+
+  let knight_square = king + offset
+  let enemy_knight =
+    board.Occupied(board.other_colour(board.side_to_move), board.Knight)
+
+  case iv.get(board.pieces, knight_square) {
+    Ok(piece) if piece == enemy_knight -> True
+    _ -> False
+  }
+}
+
+fn check_straight_attacks(board: Board, king: Position) -> Bool {
+  use direction <- list.any(rook_directions)
+
+  case check_ray_for_enemy_piece(board, king, direction, 1) {
+    Ok(board.Rook) | Ok(board.Queen) -> True
+    _ -> False
+  }
+}
+
+fn check_diagonal_attacks(board: Board, king: Position) -> Bool {
+  use direction <- list.any(bishop_directions)
+
+  case check_ray_for_enemy_piece(board, king, direction, 1) {
+    Ok(board.Bishop) | Ok(board.Queen) -> True
+    _ -> False
+  }
+}
+
+fn check_ray_for_enemy_piece(
+  board: Board,
+  square: Position,
+  direction: Int,
+  index: Int,
+) -> Result(board.Piece, Nil) {
+  let target = square + direction * index
+
+  case iv.get(board.pieces, target) {
+    Ok(board.Empty) ->
+      check_ray_for_enemy_piece(board, square, direction, index + 1)
+
+    Ok(board.Occupied(colour, piece)) if colour != board.side_to_move ->
+      Ok(piece)
+
+    _ -> Error(Nil)
   }
 }
