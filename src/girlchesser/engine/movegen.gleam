@@ -188,24 +188,36 @@ fn king_castling_moves(
   square: Position,
   rights: CastleRights,
 ) -> List(Move) {
-  let can_castle_kingside = can_castle(board, board.side_to_move, KingSide)
   let kingside_castle = board.Castle(square, square + 2)
-
-  let can_castle_queenside = can_castle(board, board.side_to_move, QueenSide)
   let queenside_castle = board.Castle(square, square - 2)
 
   case rights {
-    board.Both if can_castle_kingside && can_castle_queenside ->
-      [kingside_castle, queenside_castle, ..moves]
+    board.Both -> {
+      let can_castle_kingside = can_castle(board, board.side_to_move, KingSide)
+      let can_castle_queenside =
+        can_castle(board, board.side_to_move, QueenSide)
 
-    board.Both if can_castle_kingside -> [kingside_castle, ..moves]
+      case can_castle_kingside && can_castle_queenside {
+        True -> [kingside_castle, queenside_castle, ..moves]
+        False if can_castle_kingside -> [kingside_castle, ..moves]
+        False if can_castle_queenside -> [queenside_castle, ..moves]
+        False -> moves
+      }
+    }
 
-    board.Both if can_castle_queenside -> [queenside_castle, ..moves]
+    board.KingSide -> {
+      case can_castle(board, board.side_to_move, KingSide) {
+        True -> [kingside_castle, ..moves]
+        False -> moves
+      }
+    }
 
-    board.KingSide if can_castle_kingside -> [kingside_castle, ..moves]
-
-    board.QueenSide if can_castle_queenside ->
-      [queenside_castle, ..moves]
+    board.QueenSide -> {
+      case can_castle(board, board.side_to_move, QueenSide) {
+        True -> [queenside_castle, ..moves]
+        False -> moves
+      }
+    }
 
     _ -> moves
   }
@@ -322,8 +334,10 @@ pub fn knight(board: Board) -> List(board.Move) {
   use moves, direction <- list.fold(knight_directions, empty)
 
   case iv.get(board.pieces, square + direction) {
-    Ok(board.Occupied(colour, _)) if colour != board.side_to_move ->
-      [board.Move(square, square + direction), ..moves]
+    Ok(board.Occupied(colour, _)) if colour != board.side_to_move -> [
+      board.Move(square, square + direction),
+      ..moves
+    ]
 
     Ok(board.Empty) -> [board.Move(square, square + direction), ..moves]
 
@@ -338,7 +352,10 @@ fn generate_moves(
   for piece: Piece,
   using generator: fn(Position) -> List(Move),
 ) -> List(Move) {
-  use moves, square, index <- list.index_fold(board.pieces |> iv.to_list, list.new())
+  use moves, square, index <- list.index_fold(
+    board.pieces |> iv.to_list,
+    list.new(),
+  )
 
   case square {
     board.Empty | board.OutsideBoard -> moves
@@ -365,8 +382,10 @@ fn generate_sliding_moves(
       [board.Move(square, target), ..moves]
       |> generate_sliding_moves(board, square, direction, index + 1)
 
-    Ok(board.Occupied(colour, _)) if colour != board.side_to_move ->
-      [board.Move(square, target), ..moves]
+    Ok(board.Occupied(colour, _)) if colour != board.side_to_move -> [
+      board.Move(square, target),
+      ..moves
+    ]
 
     _ -> moves
   }
