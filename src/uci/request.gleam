@@ -46,7 +46,7 @@ pub fn parse(request: String) -> Result(Request, Nil) {
       |> parse_whitespace
       |> parse_position
 
-    "quit" -> Ok(Quit)
+    "quit" -> panic as "received UCI quit command"
 
     "setoption " <> rest ->
       rest

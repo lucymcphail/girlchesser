@@ -9,6 +9,7 @@ import gleam/option.{type Option, None, Some}
 
 pub type Response {
   Id(name: String)
+  Options
   UciOk
   ReadyOk
   BestMove(move: Move, ponder: Option(Move))
@@ -21,6 +22,10 @@ pub type Response {
 
 pub fn id() -> Nil {
   Id(name: "girlchesser") |> to_string |> io.println
+}
+
+pub fn options() -> Nil {
+  Options |> to_string |> io.println
 }
 
 pub fn uci_ok() -> Nil {
@@ -43,6 +48,10 @@ fn to_string(response: Response) -> String {
   case response {
     Id(name) -> "id name " <> name
 
+    Options ->
+      "option name Hash type spin default 16 min 16 max 16
+option name Threads type spin default 1 min 1 max 1"
+
     UciOk -> "uciok"
 
     ReadyOk -> "readyok"
@@ -52,7 +61,7 @@ fn to_string(response: Response) -> String {
     BestMove(move, Some(ponder)) -> "
         bestmove " <> move.to_string(move) <> " ponder " <> move.to_string(
         ponder,
-	)
+      )
 
     PrintBoard(board) -> board.to_string(board)
   }

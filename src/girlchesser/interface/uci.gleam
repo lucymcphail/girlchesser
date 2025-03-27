@@ -41,6 +41,7 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
     case command {
       Ok(request.Uci) -> {
 	response.id()
+	response.options()
 	response.uci_ok()
 	actor.continue(state)
       }

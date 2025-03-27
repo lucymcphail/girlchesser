@@ -1,3 +1,4 @@
+import girlchesser/bench
 import girlchesser/engine
 import girlchesser/interface/http
 import girlchesser/interface/uci
@@ -8,6 +9,10 @@ pub fn main() {
   let assert Ok(engine) = engine.start()
 
   case erlang.start_arguments() {
+    ["bench", ..] -> {
+      bench.bench()
+    }
+
     ["uci", ..] -> {
       let assert Ok(_) = uci.start_server(engine)
 
