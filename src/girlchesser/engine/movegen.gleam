@@ -26,14 +26,17 @@ pub fn legal(board: Board) -> List(Move) {
 /// they would leave the player in check.
 ///
 pub fn pseudolegal(board: Board) -> List(Move) {
-  list.flatten([
-    pawn(board),
-    knight(board),
-    bishop(board),
-    rook(board),
-    queen(board),
-    king(board),
-  ])
+  let generators = [
+    pawn(board, _),
+    knight(board, _),
+    bishop(board, _),
+    rook(board, _),
+    queen(board, _),
+    king(board, _),
+  ]
+
+  use moves, generator <- list.fold(generators, [])
+  generator(moves)
 }
 
 // PAWN MOVES ------------------------------------------------------------------
@@ -48,16 +51,15 @@ pub fn pseudolegal(board: Board) -> List(Move) {
 ///   - Capturing diagonally (including en passant)
 ///   - Promoting
 ///
-pub fn pawn(board: Board) -> List(Move) {
+pub fn pawn(board: Board, moves: List(Move)) -> List(Move) {
   let pawn_direction = case board.side_to_move {
     board.Black -> 16
     board.White -> -16
   }
 
-  let empty = list.new()
-  use square <- generate_moves(board, for: board.Pawn)
+  use moves, square <- generate_moves(board, for: board.Pawn, with: moves)
 
-  empty
+  moves
   |> pawn_one_space_moves(board, square, square + pawn_direction)
   |> pawn_two_space_moves(board, square, pawn_direction)
   |> pawn_capture_moves(board, square, square + pawn_direction - 1)
@@ -151,16 +153,15 @@ fn promotions(source: Position, target: Position) {
 ///   - Moving one square in any direction
 ///   - Castling
 ///
-pub fn king(board: Board) -> List(Move) {
-  let empty = list.new()
+pub fn king(board: Board, moves: List(Move)) -> List(Move) {
   let rights = case board.side_to_move {
     board.Black -> board.black_castle_rights
     board.White -> board.white_castle_rights
   }
 
-  use square <- generate_moves(board, for: board.King)
+  use moves, square <- generate_moves(board, for: board.King, with: moves)
 
-  empty
+  moves
   |> king_one_space_moves(board, square)
   |> king_castling_moves(board, square, rights)
 }
@@ -308,10 +309,9 @@ const rook_directions = [-16, -1, 1, 16]
 /// Generate all possible pseudolegal rook moves. These moves may leave the player
 /// in check!
 ///
-pub fn rook(board: Board) -> List(board.Move) {
-  let empty = list.new()
-  use square <- generate_moves(board, for: board.Rook)
-  use moves, direction <- list.fold(rook_directions, empty)
+pub fn rook(board: Board, moves: List(board.Move)) -> List(board.Move) {
+  use moves, square <- generate_moves(board, for: board.Rook, with: moves)
+  use moves, direction <- list.fold(rook_directions, moves)
 
   generate_sliding_moves(moves, board, square, direction, 1)
 }
@@ -323,10 +323,9 @@ const bishop_directions = [-17, -15, 15, 17]
 /// Generate all possible pseudolegal bishop moves. These moves may leave the player
 /// in check!
 ///
-pub fn bishop(board: Board) -> List(board.Move) {
-  let empty = list.new()
-  use square <- generate_moves(board, for: board.Bishop)
-  use moves, direction <- list.fold(bishop_directions, empty)
+pub fn bishop(board: Board, moves: List(board.Move)) -> List(board.Move) {
+  use moves, square <- generate_moves(board, for: board.Bishop, with: moves)
+  use moves, direction <- list.fold(bishop_directions, moves)
 
   generate_sliding_moves(moves, board, square, direction, 1)
 }
@@ -338,10 +337,9 @@ const queen_directions = [-17, -16, -15, -1, 1, 15, 16, 17]
 /// Generate all possible pseudolegal queen moves. These moves may leave the player
 /// in check!
 ///
-pub fn queen(board: Board) -> List(board.Move) {
-  let empty = list.new()
-  use square <- generate_moves(board, for: board.Queen)
-  use moves, direction <- list.fold(queen_directions, empty)
+pub fn queen(board: Board, moves: List(board.Move)) -> List(board.Move) {
+  use moves, square <- generate_moves(board, for: board.Queen, with: moves)
+  use moves, direction <- list.fold(queen_directions, moves)
 
   generate_sliding_moves(moves, board, square, direction, 1)
 }
@@ -358,10 +356,9 @@ const knight_directions = [-33, -31, -18, -14, 14, 18, 31, 33]
 /// Generate all possible pseudolegal knight moves. These moves may leave the player
 /// in check!
 ///
-pub fn knight(board: Board) -> List(board.Move) {
-  let empty = list.new()
-  use square <- generate_moves(board, for: board.Knight)
-  use moves, direction <- list.fold(knight_directions, empty)
+pub fn knight(board: Board, moves: List(Move)) -> List(board.Move) {
+  use moves, square <- generate_moves(board, for: board.Knight, with: moves)
+  use moves, direction <- list.fold(knight_directions, moves)
 
   case iv.get(board.pieces, square + direction) {
     Ok(board.Occupied(colour, _)) if colour != board.side_to_move -> [
@@ -380,18 +377,16 @@ pub fn knight(board: Board) -> List(board.Move) {
 fn generate_moves(
   board: Board,
   for piece: Piece,
-  using generator: fn(Position) -> List(Move),
+  with moves: List(Move),
+  using generator: fn(List(Move), Position) -> List(Move),
 ) -> List(Move) {
-  use moves, square, index <- list.index_fold(
-    board.pieces |> iv.to_list,
-    list.new(),
-  )
+  use moves, square, index <- iv.index_fold(board.pieces, moves)
 
   case square {
     board.Empty | board.OutsideBoard -> moves
     board.Occupied(..) -> {
       case square.colour == board.side_to_move && square.piece == piece {
-        True -> list.append(generator(index), moves)
+        True -> generator(moves, index)
         False -> moves
       }
     }

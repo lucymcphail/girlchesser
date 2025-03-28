@@ -18,7 +18,7 @@ pub fn generate_pawn_moves_1_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.pawn(board)
+  movegen.pawn(board, [])
   |> orderless_equal([
     board.Move(position.from(1, 2), position.from(1, 3)),
     board.Move(position.from(1, 2), position.from(1, 4)),
@@ -46,7 +46,7 @@ pub fn generate_en_passant_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.pawn(board)
+  movegen.pawn(board, [])
   |> orderless_equal([
     board.Move(position.from(5, 5), position.from(5, 6)),
     board.EnPassant(position.from(5, 5), position.from(4, 6)),
@@ -59,7 +59,7 @@ pub fn generate_promotion_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.pawn(board)
+  movegen.pawn(board, [])
   |> orderless_equal([
     board.Promote(position.from(4, 7), position.from(4, 8), board.Knight),
     board.Promote(position.from(4, 7), position.from(4, 8), board.Bishop),
@@ -74,7 +74,7 @@ pub fn generate_king_moves_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.king(board)
+  movegen.king(board, [])
   |> orderless_equal([
     board.Move(position.from(1, 5), position.from(1, 6)),
     board.Move(position.from(1, 5), position.from(2, 5)),
@@ -89,7 +89,7 @@ pub fn generate_castle_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.king(board)
+  movegen.king(board, [])
   |> orderless_equal([
     board.Move(position.from(5, 1), position.from(6, 1)),
     board.Castle(position.from(5, 1), position.from(7, 1)),
@@ -102,7 +102,7 @@ pub fn castle_through_pieces_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.king(board)
+  movegen.king(board, [])
   |> list.contains(board.Castle(position.from(5, 1), position.from(7, 1)))
   |> should.be_false
 }
@@ -113,7 +113,7 @@ pub fn castle_through_check_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.king(board)
+  movegen.king(board, [])
   |> list.contains(board.Castle(position.from(5, 1), position.from(7, 1)))
   |> should.be_false
 }
@@ -124,7 +124,7 @@ pub fn generate_knight_moves_1_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.knight(board)
+  movegen.knight(board, [])
   |> orderless_equal([
     board.Move(position.from(1, 4), position.from(2, 6)),
     board.Move(position.from(1, 4), position.from(3, 5)),
@@ -140,7 +140,7 @@ pub fn generate_bishop_moves_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.bishop(board)
+  movegen.bishop(board, [])
   |> orderless_equal([
     board.Move(position.from(2, 5), position.from(1, 6)),
     board.Move(position.from(2, 5), position.from(3, 6)),
@@ -161,7 +161,7 @@ pub fn kiwipete_pawns_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.pawn(board)
+  movegen.pawn(board, [])
   |> orderless_equal([
     board.Move(position.from(1, 2), position.from(1, 3)),
     board.Move(position.from(1, 2), position.from(1, 4)),
@@ -180,7 +180,7 @@ pub fn kiwipete_knights_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.knight(board)
+  movegen.knight(board, [])
   |> orderless_equal([
     board.Move(position.from(3, 3), position.from(1, 4)),
     board.Move(position.from(3, 3), position.from(2, 1)),
@@ -203,7 +203,7 @@ pub fn kiwipete_bishops_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.bishop(board)
+  movegen.bishop(board, [])
   |> orderless_equal([
     board.Move(position.from(4, 2), position.from(3, 1)),
     board.Move(position.from(4, 2), position.from(5, 3)),
@@ -226,7 +226,7 @@ pub fn kiwipete_rooks_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.rook(board)
+  movegen.rook(board, [])
   |> orderless_equal([
     board.Move(position.from(1, 1), position.from(2, 1)),
     board.Move(position.from(1, 1), position.from(3, 1)),
@@ -243,7 +243,7 @@ pub fn kiwipete_queens_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.queen(board)
+  movegen.queen(board, [])
   |> orderless_equal([
     board.Move(position.from(6, 3), position.from(4, 3)),
     board.Move(position.from(6, 3), position.from(5, 3)),
@@ -264,7 +264,7 @@ pub fn kiwipete_king_test() {
     |> fen.parse
     |> should.be_ok
 
-  movegen.king(board)
+  movegen.king(board, [])
   |> orderless_equal([
     board.Move(position.from(5, 1), position.from(4, 1)),
     board.Move(position.from(5, 1), position.from(6, 1)),
