@@ -18,10 +18,22 @@ const generators = [pawn, knight, bishop, rook, queen, king]
 /// to never leave the player in check.
 ///
 pub fn legal(board: Board) -> List(Move) {
-  use move <- list.filter(pseudolegal(board))
-  let next = board.move(board, move) |> board.swap_sides
+  do_legal(board, pseudolegal(board), [])
+}
 
-  !is_in_check(next)
+fn do_legal(
+  board: Board,
+  pseudolegal: List(Move),
+  moves: List(Move),
+) -> List(Move) {
+  case pseudolegal {
+    [] -> moves
+    [move, ..rest] ->
+      case is_in_check(board.move(board, move) |> board.swap_sides) {
+        True -> do_legal(board, rest, moves)
+        False -> do_legal(board, rest, [move, ..moves])
+      }
+  }
 }
 
 /// Generate all moves that the current player can make, regardless of whether
