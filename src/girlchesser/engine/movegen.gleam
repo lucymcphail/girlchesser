@@ -12,6 +12,8 @@ import iv
 
 // MOVES -----------------------------------------------------------------------
 
+const generators = [pawn, knight, bishop, rook, queen, king]
+
 /// Generate all valid moves for the current player. These moves are guaranteed
 /// to never leave the player in check.
 ///
@@ -26,17 +28,8 @@ pub fn legal(board: Board) -> List(Move) {
 /// they would leave the player in check.
 ///
 pub fn pseudolegal(board: Board) -> List(Move) {
-  let generators = [
-    pawn(board, _),
-    knight(board, _),
-    bishop(board, _),
-    rook(board, _),
-    queen(board, _),
-    king(board, _),
-  ]
-
   use moves, generator <- list.fold(generators, [])
-  generator(moves)
+  generator(board, moves)
 }
 
 // PAWN MOVES ------------------------------------------------------------------
@@ -252,6 +245,7 @@ fn can_castle(
       position.from(6, castling_rank),
       position.from(7, castling_rank),
     ]
+
     QueenSide -> [
       position.from(3, castling_rank),
       position.from(4, castling_rank),
@@ -437,46 +431,90 @@ fn check_pawn_attacks(board: Board, king: Position) -> Bool {
     board.Black -> [15, 17]
   }
 
-  use offset <- list.any(pawn_directions)
+  do_check_pawn_attacks(board, king, pawn_directions)
+}
 
-  let pawn_square = king + offset
-  let enemy_pawn =
-    board.Occupied(board.other_colour(board.side_to_move), board.Pawn)
+fn do_check_pawn_attacks(
+  board: Board,
+  king: Position,
+  directions: List(Int),
+) -> Bool {
+  case directions {
+    [] -> False
+    [offset, ..rest] -> {
+      let pawn_square = king + offset
+      let enemy_pawn =
+        board.Occupied(board.other_colour(board.side_to_move), board.Pawn)
 
-  case iv.get(board.pieces, pawn_square) {
-    Ok(piece) if piece == enemy_pawn -> True
-    _ -> False
+      case iv.get(board.pieces, pawn_square) {
+        Ok(piece) if piece == enemy_pawn -> True
+        _ -> do_check_pawn_attacks(board, king, rest)
+      }
+    }
   }
 }
 
 fn check_knight_attacks(board: Board, king: Position) -> Bool {
-  use offset <- list.any(knight_directions)
+  do_check_knight_attacks(board, king, knight_directions)
+}
 
-  let knight_square = king + offset
-  let enemy_knight =
-    board.Occupied(board.other_colour(board.side_to_move), board.Knight)
+fn do_check_knight_attacks(
+  board: Board,
+  king: Position,
+  directions: List(Int),
+) -> Bool {
+  case directions {
+    [] -> False
+    [offset, ..rest] -> {
+      let knight_square = king + offset
+      let enemy_knight =
+        board.Occupied(board.other_colour(board.side_to_move), board.Knight)
 
-  case iv.get(board.pieces, knight_square) {
-    Ok(piece) if piece == enemy_knight -> True
-    _ -> False
+      case iv.get(board.pieces, knight_square) {
+        Ok(piece) if piece == enemy_knight -> True
+        _ -> do_check_knight_attacks(board, king, rest)
+      }
+    }
   }
 }
 
 fn check_straight_attacks(board: Board, king: Position) -> Bool {
-  use direction <- list.any(rook_directions)
+  do_check_straight_attacks(board, king, rook_directions)
+}
 
-  case check_ray_for_enemy_piece(board, king, direction, 1) {
-    Ok(board.Rook) | Ok(board.Queen) -> True
-    _ -> False
+fn do_check_straight_attacks(
+  board: Board,
+  king: Position,
+  directions: List(Int),
+) -> Bool {
+  case directions {
+    [] -> False
+    [direction, ..rest] -> {
+      case check_ray_for_enemy_piece(board, king, direction, 1) {
+        Ok(board.Rook) | Ok(board.Queen) -> True
+        _ -> do_check_straight_attacks(board, king, rest)
+      }
+    }
   }
 }
 
 fn check_diagonal_attacks(board: Board, king: Position) -> Bool {
-  use direction <- list.any(bishop_directions)
+  do_check_diagonal_attacks(board, king, bishop_directions)
+}
 
-  case check_ray_for_enemy_piece(board, king, direction, 1) {
-    Ok(board.Bishop) | Ok(board.Queen) -> True
-    _ -> False
+fn do_check_diagonal_attacks(
+  board: Board,
+  king: Position,
+  directions: List(Int),
+) -> Bool {
+  case directions {
+    [] -> False
+    [direction, ..rest] -> {
+      case check_ray_for_enemy_piece(board, king, direction, 1) {
+        Ok(board.Bishop) | Ok(board.Queen) -> True
+        _ -> do_check_diagonal_attacks(board, king, rest)
+      }
+    }
   }
 }
 
