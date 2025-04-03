@@ -278,6 +278,9 @@ fn apply_move_rules(pieces: Pieces, move: Move, side: Colour) -> Pieces {
     EnPassant(_, _), #(to_file, 6) ->
       iv.try_set(pieces, at: position.from(file: to_file, rank: 5), to: Empty)
 
+    Promote(_, to_square, promotion_piece), _ ->
+      iv.try_set(pieces, at: to_square, to: Occupied(side, promotion_piece))
+
     _, _ -> pieces
   }
 }
