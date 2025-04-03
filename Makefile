@@ -1,4 +1,8 @@
 .PHONY: build
 
+EXE?=./girlchesser
+
 build:
-	gleam export erlang-shipment
+	gleam build
+	gleam run -m gleescript
+	cp ./girlchesser $(EXE)

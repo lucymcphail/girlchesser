@@ -1,28 +1,34 @@
+import argv
 import girlchesser/bench
 import girlchesser/engine
 import girlchesser/interface/http
 import girlchesser/interface/uci
-import gleam/erlang
 import gleam/erlang/process
+
+const tournament_interface_enabled = False
 
 pub fn main() {
   let assert Ok(engine) = engine.start()
 
-  case erlang.start_arguments() {
-    ["bench", ..] -> {
-      bench.bench()
-    }
-
-    ["uci", ..] -> {
-      let assert Ok(_) = uci.start_server(engine)
-
-      process.sleep_forever()
-    }
-
-    _ -> {
+  case tournament_interface_enabled {
+    True -> {
       let assert Ok(_) = http.start_server(engine)
 
       process.sleep_forever()
+    }
+
+    False -> {
+      case argv.load().arguments {
+        ["bench", ..] -> {
+          bench.bench()
+        }
+
+        _ -> {
+          let assert Ok(_) = uci.start_server(engine)
+
+          process.sleep_forever()
+        }
+      }
     }
   }
 }
