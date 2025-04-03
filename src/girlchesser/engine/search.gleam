@@ -33,31 +33,33 @@ pub fn search(board: Board) -> ScoredMove {
   let new_board = board |> board.move(move)
   let score = float.negate(minimax(new_board, depth))
 
-  case score >. acc.score {
+  case score >=. acc.score {
     True -> ScoredMove(move, score)
     False -> acc
   }
 }
 
 fn minimax(board: Board, depth: Int) -> Float {
-  let moves = movegen.legal(board)
+  case depth {
+    0 -> evaluation.evaluate(board)
+    _ -> {
+      let moves = movegen.legal(board)
 
-  case list.length(moves) {
-    // no moves found, the game is over
-    0 ->
-      case movegen.is_in_check(board) {
-        // checkmate
-        True -> float.negate(big_float)
+      case list.length(moves) {
+        // no moves found, the game is over
+        0 ->
+          case movegen.is_in_check(board) {
+            // checkmate
+            True -> float.negate(big_float)
 
-        // stalemate
-        False -> 0.0
-      }
+            // stalemate
+            False -> 0.0
+          }
 
-    _ ->
-      case depth {
-        0 -> evaluation.evaluate(board)
+        // game is ongoing, keep searching
         _ -> do_minimax(board, depth, moves)
       }
+    }
   }
 }
 

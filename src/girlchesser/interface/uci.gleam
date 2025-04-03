@@ -3,10 +3,10 @@
 
 // IMPORTS ---------------------------------------------------------------------
 
-import girlchesser/interface/perft
 import girlchesser/board.{type Board}
 import girlchesser/engine.{type Engine}
 import girlchesser/fen
+import girlchesser/interface/perft
 import gleam/erlang
 import gleam/erlang/process.{type Pid, type Subject}
 import gleam/function
@@ -41,10 +41,10 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
 
     case command {
       Ok(request.Uci) -> {
-	response.id()
-	response.options()
-	response.uci_ok()
-	actor.continue(state)
+        response.id()
+        response.options()
+        response.uci_ok()
+        actor.continue(state)
       }
 
       Ok(request.Isready) -> {
@@ -69,13 +69,13 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
       }
 
       Ok(request.PrintBoard) -> {
-	response.print_board(state.board)
-	actor.continue(state)
+        response.print_board(state.board)
+        actor.continue(state)
       }
 
       Ok(request.GoPerft(depth)) -> {
-	perft.perft(state.board, depth)
-	actor.continue(state)
+        perft.perft(state.board, depth)
+        actor.continue(state)
       }
 
       _ -> actor.continue(state)
