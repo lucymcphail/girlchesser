@@ -14,6 +14,8 @@ import gleam/list
 // regular chess game
 const big_float = 999_999_999_999_999_999.0
 
+const big_negative_float = -999_999_999_999_999_999.0
+
 // SEARCH ----------------------------------------------------------------------
 
 pub type ScoredMove {
@@ -21,17 +23,18 @@ pub type ScoredMove {
 }
 
 pub fn search(board: Board) -> ScoredMove {
-  let depth = 2
+  let depth = 4
 
   let moves = movegen.legal(board)
 
   use acc, move <- list.fold(
     moves,
-    ScoredMove(board.Move(0, 0), float.negate(big_float)),
+    ScoredMove(board.Move(0, 0), big_negative_float),
   )
 
   let new_board = board |> board.move(move)
-  let score = float.negate(minimax(new_board, depth))
+  let score =
+    float.negate(minimax(new_board, depth, big_negative_float, big_float))
 
   case score >=. acc.score {
     True -> ScoredMove(move, score)
@@ -39,7 +42,7 @@ pub fn search(board: Board) -> ScoredMove {
   }
 }
 
-fn minimax(board: Board, depth: Int) -> Float {
+fn minimax(board: Board, depth: Int, alpha: Float, beta: Float) -> Float {
   case depth {
     0 -> evaluation.evaluate(board)
     _ -> {
@@ -50,24 +53,48 @@ fn minimax(board: Board, depth: Int) -> Float {
         0 ->
           case movegen.is_in_check(board) {
             // checkmate
-            True -> float.negate(big_float)
+            True -> big_negative_float
 
             // stalemate
             False -> 0.0
           }
 
         // game is ongoing, keep searching
-        _ -> do_minimax(board, depth, moves)
+        _ -> {
+          do_minimax(board, depth, moves, alpha, beta, big_negative_float)
+        }
       }
     }
   }
 }
 
-fn do_minimax(board: Board, depth: Int, moves: List(Move)) -> Float {
-  use acc, move <- list.fold(moves, float.negate(big_float))
+fn do_minimax(
+  board: Board,
+  depth: Int,
+  moves: List(Move),
+  alpha: Float,
+  beta: Float,
+  acc: Float,
+) -> Float {
+  case moves {
+    [move, ..rest] -> {
+      let new_board = board |> board.move(move)
+      let score =
+        float.negate(minimax(
+          new_board,
+          depth - 1,
+          float.negate(beta),
+          float.negate(alpha),
+        ))
 
-  let new_board = board |> board.move(move)
-  let score = float.negate(minimax(new_board, depth - 1))
+      let alpha = float.max(alpha, score)
 
-  float.max(acc, score)
+      case score >=. beta {
+        True -> acc
+        False ->
+          do_minimax(board, depth, rest, alpha, beta, float.max(score, acc))
+      }
+    }
+    _ -> acc
+  }
 }
