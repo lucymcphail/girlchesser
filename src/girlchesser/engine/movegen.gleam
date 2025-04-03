@@ -435,6 +435,34 @@ fn is_in_check(board: Board) -> Bool {
   || check_diagonal_attacks(board, king)
   || check_knight_attacks(board, king)
   || check_pawn_attacks(board, king)
+  || check_king_attacks(board, king)
+}
+
+fn check_king_attacks(board: Board, king: Position) -> Bool {
+  // the king can move in the same direction as the queen, but only by one square
+  let king_offsets = queen_directions
+
+  do_check_king_attacks(board, king, king_offsets)
+}
+
+fn do_check_king_attacks(
+  board: Board,
+  king: Position,
+  directions: List(Int),
+) -> Bool {
+  case directions {
+    [] -> False
+    [offset, ..rest] -> {
+      let pawn_square = king + offset
+      let enemy_pawn =
+        board.Occupied(board.other_colour(board.side_to_move), board.King)
+
+      case iv.get(board.pieces, pawn_square) {
+        Ok(piece) if piece == enemy_pawn -> True
+        _ -> do_check_king_attacks(board, king, rest)
+      }
+    }
+  }
 }
 
 fn check_pawn_attacks(board: Board, king: Position) -> Bool {
