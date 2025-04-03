@@ -1,8 +1,7 @@
 // IMPORTS ---------------------------------------------------------------------
 
-import gleam/list
 import girlchesser/board.{type Board, type Move}
-import girlchesser/engine/movegen
+import girlchesser/engine/search
 import girlchesser/fen
 import gleam/erlang/process.{type Subject}
 import gleam/otp/actor.{type StartError}
@@ -39,8 +38,7 @@ pub fn start() -> Result(Engine, StartError) {
 // HANDLERS --------------------------------------------------------------------
 
 fn handle_move(board: Board, _: List(Move), reply: Subject(Move)) -> Board {
-  let moves = movegen.legal(board)
-  let assert Ok(move) = list.first(moves)
+  let move = search.search(board).move
 
   process.send(reply, move)
 

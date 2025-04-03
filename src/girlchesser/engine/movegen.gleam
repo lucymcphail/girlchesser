@@ -422,7 +422,7 @@ fn generate_sliding_moves(
   }
 }
 
-fn is_in_check(board: Board) -> Bool {
+pub fn is_in_check(board: Board) -> Bool {
   // legal chess positions have exactly one king of each colour, so it's
   // fine to assert here
   let assert Ok(king) =
