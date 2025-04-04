@@ -23,7 +23,7 @@ pub type ScoredMove {
 }
 
 pub fn search(board: Board) -> ScoredMove {
-  let depth = 4
+  let depth = 3
 
   let moves = movegen.legal(board)
 
@@ -48,9 +48,9 @@ fn minimax(board: Board, depth: Int, alpha: Float, beta: Float) -> Float {
     _ -> {
       let moves = movegen.legal(board)
 
-      case list.length(moves) {
+      case list.is_empty(moves) {
         // no moves found, the game is over
-        0 ->
+        True ->
           case movegen.is_in_check(board) {
             // checkmate
             True -> big_negative_float
@@ -87,6 +87,7 @@ fn do_minimax(
           float.negate(alpha),
         ))
 
+      let acc = float.max(acc, score)
       let alpha = float.max(alpha, score)
 
       case score >=. beta {
