@@ -23,7 +23,7 @@ pub type ScoredMove {
 }
 
 pub fn search(board: Board) -> ScoredMove {
-  let depth = 3
+  let depth = 2
 
   let moves = movegen.legal(board)
 
