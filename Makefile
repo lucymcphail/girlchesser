@@ -1,8 +1,13 @@
 .PHONY: build
 
-EXE?=./girlchesser
+EXE?=girlchesser
 
 build:
+ifeq ($(EXE),girlchesser)
 	gleam build
 	gleam run -m gleescript
-	cp ./girlchesser $(EXE)
+else
+	gleam build
+	gleam run -m gleescript
+	mv girlchesser $(EXE)
+endif
