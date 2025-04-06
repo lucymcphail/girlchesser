@@ -38,7 +38,8 @@ pub fn start() -> Result(Engine, StartError) {
 // HANDLERS --------------------------------------------------------------------
 
 fn handle_move(board: Board, _: List(Move), reply: Subject(Move)) -> Board {
-  let move = search.search(board).move
+  // TODO: pass in time controls from UCI or HTTP interfaces
+  let move = search.search(board, search.TimePerMove(5000)).move
 
   process.send(reply, move)
 
