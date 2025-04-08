@@ -76,8 +76,8 @@ fn do_search_to_depth(
   case moves {
     [] -> scored_moves
     [ScoredMove(move:, ..), ..rest] -> {
-      let board = board.move(board, move)
-      let score = minimax(board, depth, big_negative_float, big_float)
+      let new_board = board.move(board, move)
+      let score = minimax(new_board, depth, big_negative_float, big_float)
       let scored_move = ScoredMove(move, score *. -1.0)
 
       do_search_to_depth(board, depth, rest, [scored_move, ..scored_moves])
