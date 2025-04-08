@@ -27,7 +27,7 @@ type ScoredMove {
 //
 
 pub fn start(board: Board, save_best_move: Subject(Move)) -> Pid {
-  use <- process.start(linked: True)
+  use <- process.start(linked: False)
 
   movegen.legal(board)
   // TODO: this is super wasteful but it's less wasteful than mapping the scored
