@@ -62,7 +62,7 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
       }
 
       Ok(request.Go) -> {
-        process.call(state.engine, engine.Move(state.board, [], _), 5000)
+        process.call(state.engine, engine.MakeMove(state.board, [], _), 5000)
         |> response.best_move(option.None)
 
         actor.continue(state)
