@@ -198,7 +198,7 @@ fn parse_go_fischer_winc(
         _ -> Error(Nil)
       }
     }
-    _ -> Error(Nil)
+    _ -> Ok(Go(engine.Fischer(wtime, btime, 0, 0)))
   }
 }
 
