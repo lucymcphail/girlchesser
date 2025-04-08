@@ -32,7 +32,7 @@ pub fn start(board: Board, save_best_move: Subject(Move)) -> Pid {
   movegen.legal(board)
   // TODO: this is super wasteful but it's less wasteful than mapping the scored
   // moves to remove the score portion before recursing...
-  |> list.map(ScoredMove(_, 0.0))
+  |> list.map(ScoredMove(_, big_negative_float))
   |> loop(board, _, 1, save_best_move)
 }
 
