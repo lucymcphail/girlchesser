@@ -1,9 +1,10 @@
 // IMPORTS ---------------------------------------------------------------------
 
-import gleam/int
 import girlchesser/board.{type Board}
 import girlchesser/board/move
+import girlchesser/engine.{type TimeControl}
 import girlchesser/fen
+import gleam/int
 import gleam/set.{type Set}
 import gleam/string
 
@@ -16,7 +17,7 @@ pub type Request {
   SetOption(name: String, value: String)
   UciNewGame
   Position(board: Board)
-  Go
+  Go(time_control: TimeControl)
   Stop
   Ponderhit
   Quit
@@ -41,7 +42,10 @@ pub fn parse(request: String) -> Result(Request, Nil) {
       rest
       |> parse_perft_depth
 
-    "go" <> _ -> Ok(Go)
+    "go" <> rest ->
+      rest
+      |> parse_whitespace
+      |> parse_go
 
     "isready" -> Ok(Isready)
 
@@ -137,6 +141,85 @@ fn parse_position_moves(request: String, board: Board) -> Result(Request, Nil) {
   }
 }
 
+// PARSE GO --------------------------------------------------------------------
+
+fn parse_go(request: String) -> Result(Request, Nil) {
+  case request {
+    // if we just receive `go`, then default to 5s per move
+    "" -> Ok(Go(engine.TimePerMove(5000)))
+
+    "movetime " <> rest -> rest |> parse_go_movetime
+    "wtime " <> rest -> rest |> parse_go_fischer()
+    _ -> Error(Nil)
+  }
+}
+
+fn parse_go_movetime(request: String) -> Result(Request, Nil) {
+  case int.parse(request) {
+    Ok(movetime) -> Ok(Go(engine.TimePerMove(movetime)))
+    _ -> Error(Nil)
+  }
+}
+
+fn parse_go_fischer(request: String) -> Result(Request, Nil) {
+  case parse_number(request) {
+    Ok(#(wtime, rest)) ->
+      parse_go_fischer_btime(rest |> parse_whitespace, wtime)
+
+    _ -> Error(Nil)
+  }
+}
+
+fn parse_go_fischer_btime(request: String, wtime: Int) -> Result(Request, Nil) {
+  case request {
+    "btime " <> rest -> {
+      case parse_number(rest) {
+        Ok(#(btime, rest)) ->
+          parse_go_fischer_winc(rest |> parse_whitespace, wtime, btime)
+
+        _ -> Error(Nil)
+      }
+    }
+    _ -> Error(Nil)
+  }
+}
+
+fn parse_go_fischer_winc(
+  request: String,
+  wtime: Int,
+  btime: Int,
+) -> Result(Request, Nil) {
+  case request {
+    "winc " <> rest -> {
+      case parse_number(rest) {
+        Ok(#(winc, rest)) ->
+          parse_go_fischer_binc(rest |> parse_whitespace, wtime, btime, winc)
+
+        _ -> Error(Nil)
+      }
+    }
+    _ -> Error(Nil)
+  }
+}
+
+fn parse_go_fischer_binc(
+  request: String,
+  wtime: Int,
+  btime: Int,
+  winc: Int,
+) -> Result(Request, Nil) {
+  case request {
+    "binc " <> rest -> {
+      case parse_number(rest) {
+        Ok(#(binc, _)) -> Ok(Go(engine.Fischer(wtime:, btime:, winc:, binc:)))
+
+        _ -> Error(Nil)
+      }
+    }
+    _ -> Error(Nil)
+  }
+}
+
 // PARSE PERFT DEPTH -----------------------------------------------------------
 
 fn parse_perft_depth(request: String) -> Result(Request, Nil) {
@@ -206,5 +289,16 @@ fn do_parse_interesting(
         True -> Ok(#(interesting, rest))
         False -> do_parse_interesting(rest, break, interesting <> char)
       }
+  }
+}
+
+fn parse_number(request: String) -> Result(#(Int, String), Nil) {
+  case parse_interesting(request, set.from_list([" ", "\t"])) {
+    Ok(#(number, rest)) ->
+      case int.parse(number) {
+        Ok(number) -> Ok(#(number, rest))
+        Error(_) -> Error(Nil)
+      }
+    Error(_) -> Error(Nil)
   }
 }

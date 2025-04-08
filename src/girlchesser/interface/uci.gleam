@@ -61,8 +61,13 @@ pub fn start_server(engine: Engine) -> Result(Subject(String), StartError) {
         actor.continue(State(..state, board:))
       }
 
-      Ok(request.Go) -> {
-        process.call(state.engine, engine.MakeMove(state.board, [], _), 5000)
+      Ok(request.Go(time_control:)) -> {
+        process.call_forever(state.engine, engine.MakeMove(
+          state.board,
+          [],
+          time_control,
+          _,
+        ))
         |> response.best_move(option.None)
 
         actor.continue(state)

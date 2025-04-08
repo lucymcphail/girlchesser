@@ -52,7 +52,14 @@ fn handle_move(request: Request, engine: Engine) -> Response {
   case data {
     Error(_) -> wisp.bad_request()
     Ok(#(board, attempts)) -> {
-      let move = process.call(engine, engine.MakeMove(board, attempts, _), 5000)
+      let time_control = engine.TimePerMove(5000)
+      let move =
+        process.call_forever(engine, engine.MakeMove(
+          board,
+          attempts,
+          time_control,
+          _,
+        ))
 
       wisp.ok() |> wisp.string_body(move.to_string(move))
     }
