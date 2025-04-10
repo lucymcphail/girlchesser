@@ -16,6 +16,12 @@ pub fn from(file file: Int, rank rank: Int) -> Position {
   { 16 * { 8 - rank } } + { file - 1 } + 36
 }
 
+///
+///
+pub fn from_8x8(pos: Int) -> Position {
+  16 * { rank(pos) - 1 } + { file(pos) - 1 } + 36
+}
+
 // CONVERSIONS -----------------------------------------------------------------
 
 ///
