@@ -5,7 +5,7 @@ import girlchesser/interface/http
 import girlchesser/interface/uci
 import gleam/erlang/process
 
-const tournament_interface_enabled = False
+const tournament_interface_enabled = True
 
 pub fn main() {
   let assert Ok(engine) = engine.start()
